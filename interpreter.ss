@@ -3,31 +3,51 @@
 (define top-level-eval
   (lambda (form)
     ; later we may add things that are not expressions.
-    (eval-exp form)))
+    (eval-exp form (empty-env))))
 
 ; eval-exp is the main component of the interpreter
 
 (define eval-exp
+ (let ([identity-proc (lambda (x) x)])
   (lambda (exp env)
     (cases expression exp
-	   [lit-exp (datum) datum]
-	   [var-exp (id)
-		    (apply-env init-env id; look up its value.
-			       (lambda (x) x) ; procedure to call if id is in the environment 
-			       (lambda () (eopl:error 'apply-env ; procedure to call if id not in env
-						      "variable not found in environment: ~s"
-						      id)))] 
-	   [app-exp (rator rands)
-		    (let ([proc-value (eval-exp rator env)]
-			  [args (eval-rands rands env)])
-		      (apply-proc proc-value args))]
-	   [else (eopl:error 'eval-exp "Bad abstract syntax: ~a" exp)])))
-
+      [lit-exp (datum) datum]
+      [var-exp (id) ; look up its value.
+        (apply-env env
+          id
+	  identity-proc ; procedure to call if var is in env 
+	  (lambda () ; procedure to call if var is not in env
+	    (apply-env global-env  ; was init-env
+		       id
+		       identity-proc
+		       (lambda ()
+			 (error 'apply-env "variable ~s is not bound" id)))))]
+      [app-exp (rands)
+	       (let ([proc-value (eval-exp (car rands) env)]
+		     [args (eval-rands (cdr rands) env)])
+		 (apply-proc proc-value args))]
+      [let-exp (vars exp bodies)
+	       (let ([new-env (extend-env vars
+					  (eval-rands exps env)
+					  env)])
+		 (eval-bodies bodies new-env))]
+      [if-exp (id true false)
+	      (if (eval-exp id env)
+		  (eval-exp true env)
+		  (eval-exp false env))]
+      [if-exp-ne (id true)
+		 (if (eval-exp id env)
+		     (eval-exp true env))]
+      [lambda-exp (id body)
+		  (closure id body env)]
+      [else (eopl:error 'eval-exp "Bad abstract syntax: ~a" exp)]))))
+ 
 ; evaluate the list of operands, putting results into a list
 
 (define eval-rands
   (lambda (rands env)
-    (map (lambda (x) (eval-exp env)) rands)))
+    (map (lambda (x) 
+	   (eval-exp x env)) rands)))
 
 ;  Apply a procedure to its arguments.
 ;  At this point, we only have primitive procedures.  
@@ -80,9 +100,11 @@
 (define eval-one-exp
   (lambda (x) (top-level-eval (parse-exp x))))
 
+(define global-env init-env)
 
-
-
+(define 1st car)
+(define 2nd cadr)
+(define 3rd caddr)
 
 
 

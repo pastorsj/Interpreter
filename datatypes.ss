@@ -4,12 +4,8 @@
 (define-datatype expression expression?
   [var-exp
    (id symbol?)]
-   [lit-exp
-   (datum
-    (lambda (x)
-      (ormap 
-       (lambda (pred) (pred x))
-       (list number? vector? boolean? symbol? string? pair? null?))))]
+  [lit-exp
+   (datum literal?)]
   [app-exp
    (rand (list-of expression?))]
   [lambda-exp
