@@ -62,7 +62,7 @@
                    "Attempt to apply bad procedure: ~s" 
                     proc-value)])))
 
-(define *prim-proc-names* '(+ - * add1 sub1 cons =))
+(define *prim-proc-names* '(+ - * / add1 sub1 zero? not = > >= < <= quote ' car cdr list null? assq eq? equal? eqv? atom? cons length list->vector list? pair? procedure? vector->list vector))
 
 (define init-env         ; for now, our initial global environment only contains 
   (extend-env            ; procedure names.  Recall that an environment associates
@@ -77,13 +77,38 @@
 (define apply-prim-proc
   (lambda (prim-proc args)
     (case prim-proc
-      [(+) (+ (1st args) (2nd args))]
-      [(-) (- (1st args) (2nd args))]
-      [(*) (* (1st args) (2nd args))]
+      [(+) (apply + args)]
+      [(-) (apply - args)]
+      [(*) (apply * args)]
+      [(/) (apply / args)]
       [(add1) (+ (1st args) 1)]
       [(sub1) (- (1st args) 1)]
-      [(cons) (cons (1st args) (2nd args))]
+      [(zero?) (= (1st args) 0)]
+      [(not) (not (1st args))]
       [(=) (= (1st args) (2nd args))]
+      [(>) (apply > args)]
+      [(>=) (apply >= args)]
+      [(<) (apply < args)]
+      [(<=) (apply <= args)]
+      [(quote) (quote (1st args))]
+      [(') (quote (1st args))]
+      [(cons) (apply cons args)]
+      [(car) (car (1st args))]
+      [(cdr) (cdr (1st args))]
+      [(list) (list args)]
+      [(null?) (null? args)]
+      [(assq) (assq (1st args) (2nd args))]
+      [(eq?) (eq? (1st args) (2nd args))]
+      [(equal?) (equal? (1st args) (2nd args))]
+      [(eqv?) (eqv? (1st args) (2nd args))]
+      [(atom?) (atom? args)]
+      [(length) (length (1st args))]
+      [(list->vector) (list->vector (1st args))]
+      [(list?) (list? (1st args))]
+      [(pair?) (pair? (1st args))]
+      [(procedure?) (procedure? (1st args))]
+      [(vector->list) (vector->list (1st args))]
+      [(vector) (list->vector (1st args))]
       [else (error 'apply-prim-proc 
             "Bad primitive procedure name: ~s" 
             prim-op)])))
