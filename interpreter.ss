@@ -26,11 +26,11 @@
 	       (let ([proc-value (eval-exp (car rands) env)]
 		     [args (eval-rands (cdr rands) env)])
 		 (apply-proc proc-value args))]
-      [let-exp (vars exp bodies)
+      [let-exp (vars vals body)
 	       (let ([new-env (extend-env vars
-					  (eval-rands exps env)
+					  (eval-rands vals env)
 					  env)])
-		 (eval-bodies bodies new-env))]
+		 (eval-bodies body new-env))]
       [if-exp (id true false)
 	      (if (eval-exp id env)
 		  (eval-exp true env)
@@ -39,7 +39,7 @@
 		 (if (eval-exp id env)
 		     (eval-exp true env))]
       [lambda-exp (id body)
-		  (closure id body env)]
+		    (closure id body env)]
       [else (eopl:error 'eval-exp "Bad abstract syntax: ~a" exp)]))))
  
 ; evaluate the list of operands, putting results into a list
@@ -48,6 +48,22 @@
   (lambda (rands env)
     (map (lambda (x) 
 	   (eval-exp x env)) rands)))
+
+; evaluate a list of procedures, returning the last one (used for lets)
+
+(define eval-bodies
+  (lambda (bodies env)
+    (if (null? (cdr bodies))
+      (eval-exp (car bodies) env)
+      (begin
+        (eval-exp (car bodies) env)
+        (eval-bodies (cdr bodies) env)))))
+
+; create closures for lambda expressions
+
+(define closure
+  (lambda (vars bodies env)
+    (vector vars bodies env)))
 
 ;  Apply a procedure to its arguments.
 ;  At this point, we only have primitive procedures.  
@@ -62,7 +78,8 @@
                    "Attempt to apply bad procedure: ~s" 
                     proc-value)])))
 
-(define *prim-proc-names* '(+ - * / add1 sub1 zero? not = > >= < <= quote ' car cdr list null? assq eq? equal? eqv? atom? cons length list->vector list? pair? procedure? vector->list vector))
+(define *prim-proc-names* '(+ - * / add1 sub1 zero? not = > >= < <= quote car cdr list null? assq eq? equal? eqv? atom? cons length list->vector list? pair? procedure? vector->list vector make-vector vector-ref vector? number? symbol? set-car! set-cdr!
+	vector-set! display newline caar cadr cdar cddr caaar caadr cadar caddr cdaar cdadr cddar cdddr))
 
 (define init-env         ; for now, our initial global environment only contains 
   (extend-env            ; procedure names.  Recall that an environment associates
@@ -90,12 +107,11 @@
       [(>=) (apply >= args)]
       [(<) (apply < args)]
       [(<=) (apply <= args)]
-      [(quote) (quote (1st args))]
-      [(') (quote (1st args))]
+      [(quote) (1st args)]
       [(cons) (apply cons args)]
       [(car) (car (1st args))]
       [(cdr) (cdr (1st args))]
-      [(list) (list args)]
+      [(list) args]
       [(null?) (null? args)]
       [(assq) (assq (1st args) (2nd args))]
       [(eq?) (eq? (1st args) (2nd args))]
@@ -109,6 +125,31 @@
       [(procedure?) (procedure? (1st args))]
       [(vector->list) (vector->list (1st args))]
       [(vector) (list->vector (1st args))]
+      [(make-vector) (cond
+      					[(= 1 (length args)) (make-vector (1st args) 0)]
+      					[(= 2 (length args)) (make-vector (1st args) (2nd args))]
+      					[else (eopl:error 'apply-prim-proc "Incorrect number of arguments to make-vector" args)])]
+      [(vector-ref) (vector-ref (1st args) (2nd args))]
+      [(vector?) (vector? (1st args))]
+      [(number?) (number? (1st args))]
+      [(symbol?) (symbol? (1st args))]
+      [(set-car!) (set-car! (1st args) (2nd args))]
+      [(set-cdr!) (set-cdr! (1st args) (2nd args))]
+      [(vector-set!) (apply vector-set! args)]
+      [(display) (display args)]
+      [(newline) (newline)]
+      [(caar) (car (car (1st args)))]
+      [(cadr) (car (cdr (1st args)))]
+      [(cdar) (cdr (car (1st args)))]
+      [(cddr) (cdr (cdr (1st args)))]
+      [(caaar) (car (car (car (1st args))))]
+      [(caadr) (car (car (cdr (1st args))))]
+      [(cadar) (car (cdr (car (1st args))))]
+      [(caddr) (car (cdr (cdr (1st args))))]
+      [(cdddr) (cdr (cdr (cdr (1st args))))]
+      [(cddar) (cdr (cdr (car (1st args))))]
+      [(cdaar) (cdr (car (car (1st args))))]
+      [(cdadr) (cdr (car (cdr (1st args))))]
       [else (error 'apply-prim-proc 
             "Bad primitive procedure name: ~s" 
             prim-op)])))
