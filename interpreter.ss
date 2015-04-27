@@ -68,7 +68,7 @@
   (lambda (proc-value args)
     (cases proc-val proc-value
       [prim-proc (op) (apply-prim-proc op args)]
-			[clos-proc (op) ((eval-exp (cadr op) (caddr op)) args)]
+			[clos-proc (vars body env) (eval-bodies body (extend-env vars args env))]
       [else (error 'apply-proc
                    "Attempt to apply bad procedure: ~s" 
                     proc-value)])))
@@ -105,9 +105,9 @@
       [(quote) (quote  ((lambda (x) x) (1st args)))]
       [(cons) (apply cons args)]
       [(car) (car (1st args))]
-      [(cdr) (cdr (1st args))]
+      [(cdr) (if (null? (1st args)) (eopl:error 'apply-prim-proc "cannot take cdr of ~s" (1st args)) (cdr (1st args)))]
       [(list) args]
-      [(null?) (null? args)]
+      [(null?) (null? (1st args))]
       [(assq) (assq (1st args) (2nd args))]
       [(eq?) (eq? (1st args) (2nd args))]
       [(equal?) (equal? (1st args) (2nd args))]
@@ -117,7 +117,7 @@
       [(list->vector) (list->vector (1st args))]
       [(list?) (list? (1st args))]
       [(pair?) (pair? (1st args))]
-      [(procedure?) (procedure? (1st args))]
+      [(procedure?) (proc-val? (1st args))]
       [(vector->list) (vector->list (1st args))]
       [(vector) (list->vector (1st args))]
       [(make-vector) (cond
