@@ -7,6 +7,7 @@
 (define parse-exp         
   (lambda (datum)
     (cond
+     [(and (list? datum) (eqv? (car datum) 'quote)) (quote-exp (cadr datum))]
      [(symbol? datum) (var-exp datum)]
      [(literal? datum) (lit-exp datum)]
      [(pair? datum)

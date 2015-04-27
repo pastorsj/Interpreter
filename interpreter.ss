@@ -11,6 +11,7 @@
  (let ([identity-proc (lambda (x) x)])
   (lambda (exp env)
     (cases expression exp
+      [quote-exp (datum) datum]
       [lit-exp (datum) datum]
       [var-exp (id) ; look up its value.
         (apply-env env
@@ -39,7 +40,7 @@
 		 (if (eval-exp id env)
 		     (eval-exp true env))]
       [lambda-exp (id body)
-		    (closure id body env)]
+		    (clos-proc id body env)]
       [else (eopl:error 'eval-exp "Bad abstract syntax: ~a" exp)]))))
  
 ; evaluate the list of operands, putting results into a list
@@ -59,12 +60,6 @@
         (eval-exp (car bodies) env)
         (eval-bodies (cdr bodies) env)))))
 
-; create closures for lambda expressions
-
-(define closure
-  (lambda (vars bodies env)
-    (vector vars bodies env)))
-
 ;  Apply a procedure to its arguments.
 ;  At this point, we only have primitive procedures.  
 ;  User-defined procedures will be added later.
@@ -73,12 +68,12 @@
   (lambda (proc-value args)
     (cases proc-val proc-value
       [prim-proc (op) (apply-prim-proc op args)]
-			; You will add other cases
+			[clos-proc (op) ((eval-exp (cadr op) (caddr op)) args)]
       [else (error 'apply-proc
                    "Attempt to apply bad procedure: ~s" 
                     proc-value)])))
 
-(define *prim-proc-names* '(+ - * / add1 sub1 zero? not = > >= < <= quote car cdr list null? assq eq? equal? eqv? atom? cons length list->vector list? pair? procedure? vector->list vector make-vector vector-ref vector? number? symbol? set-car! set-cdr!
+(define *prim-proc-names* '(+ - * / add1 sub1 zero? not = > >= < <= car cdr list null? assq eq? equal? eqv? atom? cons length list->vector list? pair? procedure? vector->list vector make-vector vector-ref vector? number? symbol? set-car! set-cdr!
 	vector-set! display newline caar cadr cdar cddr caaar caadr cadar caddr cdaar cdadr cddar cdddr))
 
 (define init-env         ; for now, our initial global environment only contains 
@@ -107,7 +102,7 @@
       [(>=) (apply >= args)]
       [(<) (apply < args)]
       [(<=) (apply <= args)]
-      [(quote) (1st args)]
+      [(quote) (quote  ((lambda (x) x) (1st args)))]
       [(cons) (apply cons args)]
       [(car) (car (1st args))]
       [(cdr) (cdr (1st args))]

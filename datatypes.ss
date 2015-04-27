@@ -4,7 +4,7 @@
 (define-datatype expression expression?
   [var-exp
    (id symbol?)]
-   [lit-exp
+  [lit-exp
    (datum
     (lambda (x)
       (ormap 
@@ -47,7 +47,9 @@
    (body (list-of expression?))]
   [set-exp
    (id symbol?)
-   (body expression?)])
+   (body expression?)]
+  [quote-exp
+   (id scheme-value?)])
 
 	
 ; datatype for procedures.  At first there is only one
@@ -55,7 +57,11 @@
 
 (define-datatype proc-val proc-val?
   [prim-proc
-   (name symbol?)])
+   (name symbol?)]
+  [clos-proc
+    (vars (list-of symbol?))
+    (body (list-of expression?))
+    (env environment?)])
 	 
 	 
 	 
