@@ -17,8 +17,8 @@
          [(= 2 (length datum)) (eopl:error 'parse-exp "lambda-expression: incorrect length ~s" datum)]
          [(list? (cadr datum))
           (if (andmap symbol? (cadr datum))
-	      (lambda-exp (cadr datum)
-			  (map parse-exp (cddr datum))) (eopl:error 'parse-exp "lambda's formal arguments ~s must all be symbols" (cadr datum)))]
+	         (lambda-exp (cadr datum)
+			     (map parse-exp (cddr datum))) (eopl:error 'parse-exp "lambda's formal arguments ~s must all be symbols" (cadr datum)))]
          [(symbol? (cadr datum))
           (lambda-exp-nolimit (cadr datum)
 			      (map parse-exp (cddr datum)))]
