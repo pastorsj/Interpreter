@@ -23,8 +23,8 @@
          [(symbol? (cadr datum))
           (lambda-exp-nolimit (cadr datum)
 			      (map parse-exp (cddr datum)))]
-         [(improperlist? (cadr datum))
-          (lambda-var-improperls (cadr datum)
+         [(improper-list? (cadr datum))
+          (lambda-exp-improperls (cadr datum)
                                  (map parse-exp (cddr datum)))])]
        [(eqv? (car datum) 'if)
         (cond
@@ -144,8 +144,8 @@
           [else (cons (cadar ls-of-ls) (last (cdr ls-of-ls)))])))
 
 (define improper-list?
-  (lambda (x)
-    (and (pair? x) (not (list? x)))))
+  (lambda (y)
+    (and (pair? y) (not (list? y)))))
 
 (define list-of-list?
   (lambda (ls)

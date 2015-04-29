@@ -16,8 +16,9 @@
    (id (list-of symbol?))
    (body (list-of expression?))]
   [lambda-exp-improperls
-   (id (list-of improper-list?))
-   (body (list-of epxression?))]
+   (reqs (list-of symbol?))
+   (non-req symbol?)
+   (body (list-of expression?))]
   [lambda-exp-nolimit
    (id symbol?)
    (body (list-of expression?))]

@@ -41,7 +41,11 @@
 		      (if (eval-exp id env)
 		      (eval-exp true env))]
         [lambda-exp (id body)
-		      (clos-proc id body env)]
+		    (clos-proc id body env)]
+	[lambda-exp-improperls (id body)
+			       (clos-proc id body env)]
+	[lambda-exp-nolimit (id body)
+			    (clos-proc (list id) body env)]
         [else (eopl:error 'eval-exp "Bad abstract syntax: ~a" exp)]))))
  
 ; evaluate the list of operands, putting results into a list
@@ -75,7 +79,7 @@
                     proc-value)])))
 
 (define *prim-proc-names* '(+ - * / add1 sub1 zero? not = > >= < <= car cdr list null? assq eq? equal? eqv? atom? cons length list->vector list? pair? procedure? vector->list vector make-vector vector-ref vector? number? symbol? set-car! set-cdr!
-	vector-set! display newline caar cadr cdar cddr caaar caadr cadar caddr cdaar cdadr cddar cdddr))
+	vector-set! display newline caar cadr cdar cddr caaar caadr cadar caddr cdaar cdadr cddar cdddr apply map))
 
 (define init-env         ; for now, our initial global environment only contains 
   (extend-env            ; procedure names.  Recall that an environment associates
@@ -120,7 +124,7 @@
       [(pair?) (pair? (1st args))]
       [(procedure?) (proc-val? (1st args))]
       [(vector->list) (vector->list (1st args))]
-      [(vector) (list->vector (1st args))]
+      [(vector) (list->vector args)]
       [(make-vector) (cond
       					[(= 1 (length args)) (make-vector (1st args) 0)]
       					[(= 2 (length args)) (make-vector (1st args) (2nd args))]
@@ -146,9 +150,22 @@
       [(cddar) (cdr (cdr (car (1st args))))]
       [(cdaar) (cdr (car (car (1st args))))]
       [(cdadr) (cdr (car (cdr (1st args))))]
+      [(apply) (apply-proc (1st args) (2nd args))]
+      [(map) (map (lambda (x) (apply-proc (1st args) x)) (matrix-transpose (cdr args)))]
       [else (error 'apply-prim-proc 
             "Bad primitive procedure name: ~s" 
             prim-op)])))
+
+;syntax-expand procedure
+
+(define syntax-expand
+  (lambda (exp)
+    (let exp-recur ((exp exp))
+      (cases expression exp
+       [let-exp (vars vals body)
+		(app-exp (append (list (lambda-exp vars body)) vals))]
+       [else exp]))))
+
 
 (define rep      ; "read-eval-print" loop.
   (lambda ()
@@ -168,7 +185,28 @@
 (define 2nd cadr)
 (define 3rd caddr)
 
+;Extra helper procedures for our interpreter...
+(define matrix-transpose
+  (lambda (m)
+    (if (null? (car m))
+	'()
+	(cons (get-firsts m) (matrix-transpose (get-new-matrix m))))))
 
+(define get-firsts 
+  (lambda (m)
+    (if (null? m)
+	'()
+	(cons (caar m) (get-firsts (cdr m))))))
+
+(define get-new-matrix
+  (lambda (m)
+    (if (null? m)
+	'()
+	(cons (cdr (car m)) (get-new-matrix (cdr m))))))
+
+;(define let-exp->lambda-exp
+;  (lambda (expression)
+;    (app-exp (list (lambda-exp (id body
 
 
 
