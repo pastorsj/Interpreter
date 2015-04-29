@@ -49,7 +49,10 @@
    (id symbol?)
    (body expression?)]
   [quote-exp
-   (id scheme-value?)])
+   (id scheme-value?)]
+  [when-exp
+   (test expression?)
+   (body (list-of expression?))])
 
 	
 ; datatype for procedures.  At first there is only one
@@ -57,7 +60,7 @@
 
 (define-datatype proc-val proc-val?
   [prim-proc
-   (name symbol?)]
+   (name symbol?)]   
   [clos-proc
     (vars (list-of symbol?))
     (body (list-of expression?))

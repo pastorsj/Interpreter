@@ -8,40 +8,41 @@
 ; eval-exp is the main component of the interpreter
 
 (define eval-exp
- (let ([identity-proc (lambda (x) x)])
-  (lambda (exp env)
-    (cases expression exp
-      [quote-exp (datum) datum]
-      [lit-exp (datum) datum]
-      [var-exp (id) ; look up its value.
-        (apply-env env
-          id
-	  identity-proc ; procedure to call if var is in env 
-	  (lambda () ; procedure to call if var is not in env
-	    (apply-env global-env  ; was init-env
-		       id
-		       identity-proc
-		       (lambda ()
-			 (error 'apply-env "variable ~s is not bound" id)))))]
-      [app-exp (rands)
-	       (let ([proc-value (eval-exp (car rands) env)]
-		     [args (eval-rands (cdr rands) env)])
-		 (apply-proc proc-value args))]
-      [let-exp (vars vals body)
-	       (let ([new-env (extend-env vars
+  (let ([identity-proc (lambda (x) x)])
+    (lambda (exp env)
+      (cases expression exp
+        [quote-exp (datum) datum]
+        [when-exp (test bodies) (if (eval-exp test env) (eval-bodies bodies env))]
+        [lit-exp (datum) datum]
+        [var-exp (id) ; look up its value.
+          (apply-env env
+            id
+	          identity-proc ; procedure to call if var is in env 
+	          (lambda () ; procedure to call if var is not in env
+	            (apply-env global-env  ; was init-env
+		            id
+		            identity-proc
+		              (lambda ()
+			              (error 'apply-env "variable ~s is not bound" id)))))]
+        [app-exp (rands)
+	        (let ([proc-value (eval-exp (car rands) env)]
+		    [args (eval-rands (cdr rands) env)])
+		      (apply-proc proc-value args))]
+        [let-exp (vars vals body)
+	        (let ([new-env (extend-env vars
 					  (eval-rands vals env)
 					  env)])
-		 (eval-bodies body new-env))]
-      [if-exp (id true false)
-	      (if (eval-exp id env)
-		  (eval-exp true env)
-		  (eval-exp false env))]
-      [if-exp-ne (id true)
-		 (if (eval-exp id env)
-		     (eval-exp true env))]
-      [lambda-exp (id body)
-		    (clos-proc id body env)]
-      [else (eopl:error 'eval-exp "Bad abstract syntax: ~a" exp)]))))
+		        (eval-bodies body new-env))]
+        [if-exp (id true false)
+	        (if (eval-exp id env)
+		      (eval-exp true env)
+		      (eval-exp false env))]
+        [if-exp-ne (id true)
+		      (if (eval-exp id env)
+		      (eval-exp true env))]
+        [lambda-exp (id body)
+		      (clos-proc id body env)]
+        [else (eopl:error 'eval-exp "Bad abstract syntax: ~a" exp)]))))
  
 ; evaluate the list of operands, putting results into a list
 
