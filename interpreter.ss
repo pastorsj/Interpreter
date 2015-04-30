@@ -48,9 +48,9 @@
 			    (clos-improc (list id) body env)]
 	[while-exp (test body)
 		   (if (eval-exp test env) 
-		       (eval-exp (app-exp '((lambda-exp () 
-					      (app-exp ((lambda-exp () body))) 
-					      (while-exp test body)))) env))]
+		       (eval-exp (app-exp `((lambda-exp () 
+					      ((app-exp ((lambda-exp ()  ,body))) 
+					      (while-exp ,test ,body))))) env))]
         [else (eopl:error 'eval-exp "Bad abstract syntax: ~a" exp)]))))
  
 ; evaluate the list of operands, putting results into a list
@@ -180,15 +180,27 @@
 		  (app-exp (list (lambda-exp '() (map syntax-expand body))))]
        [cond-exp (conditions bodies)
         (cond
-          [(null? (cdr conditions)) (if-exp-ne (car conditions) (car bodies))]
-          [(equal? (var-exp 'else) (cadr conditions)) (if-exp (car conditions) (car bodies) (cadr bodies))]
-          [else (if-exp (car conditions) (car bodies) (syntax-expand (cond-exp (cdr conditions) (cdr bodies))))])]
+          [(null? (cdr conditions)) (if-exp-ne (syntax-expand (car conditions)) (syntax-expand (car bodies)))]
+          [(equal? (var-exp 'else) (cadr conditions)) (if-exp (syntax-expand (car conditions)) (syntax-expand (car bodies)) (syntax-expand (cadr bodies)))]
+          [else (if-exp (syntax-expand (car conditions)) (syntax-expand (car bodies)) (syntax-expand (cond-exp (cdr conditions) (cdr bodies))))])]
        [and-exp (body)
         (if (null? body) (lit-exp #t)
-          (if-exp (car body) (syntax-expand (and-exp (cdr body))) (lit-exp #f)))]
+          (if-exp (syntax-expand (car body)) (syntax-expand (and-exp (cdr body))) (lit-exp #f)))]
        [or-exp (body)
         (if (null? body) (lit-exp #f)
-        (if-exp (car body) (lit-exp #t) (syntax-expand (or-exp (cdr body)))))]
+        (if-exp (syntax-expand (car body)) (lit-exp #t) (syntax-expand (or-exp (cdr body)))))]
+       [if-exp (id true false)
+	       (if-exp (syntax-expand id)
+		       (syntax-expand true)
+		       (syntax-expand false))]
+       [if-exp-ne (id true)
+	       (if-exp-ne (syntax-expand id)
+		       (syntax-expand true))]
+       [case-exp (id conditions bodies)
+		 (cond 
+		  [(null? (cdr conditions)) (if-exp-ne (syntax-expand (member id (cadar conditions))) (syntax-expand (car bodies)))]
+		  [(equal? (var-exp 'else) (cadr conditions)) (if-exp (syntax-expand (member id (cadar conditions))) (syntax-expand (car bodies)) (syntax-expand (cadr bodies)))]
+		  [else (if-exp (syntax-expand (member id (cadar conditions))) (syntax-expand (car bodies)) (syntax-expand (cond-exp (cdr conditions) (cdr bodies))))])]	 
        [else exp]))))
 
 

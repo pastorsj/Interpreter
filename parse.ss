@@ -7,12 +7,20 @@
 (define parse-exp         
   (lambda (datum)
     (cond
-     [(and (list? datum) (eqv? (car datum) 'quote)) (quote-exp (cadr datum))]
-     [(and (list? datum) (eqv? (car datum) 'and)) (and-exp (map parse-exp (cdr datum)))]
-     [(and (list? datum) (eqv? (car datum) 'or)) (or-exp (map parse-exp (cdr datum)))]
-     [(and (list? datum) (eqv? (car datum) 'when)) (when-exp (parse-exp (cadr datum)) (map parse-exp (cddr datum)))]
-     [(and (list? datum) (eqv? (car datum) 'cond)) (let ((transp (matrix-transpose (cdr datum))))
-                                                      (cond-exp (map parse-exp (car transp)) (map parse-exp (cadr transp))))]
+     [(and (list? datum) (eqv? (car datum) 'quote)) 
+      (quote-exp (cadr datum))]
+     [(and (list? datum) (eqv? (car datum) 'and)) 
+      (and-exp (map parse-exp (cdr datum)))]
+     [(and (list? datum) (eqv? (car datum) 'or)) 
+      (or-exp (map parse-exp (cdr datum)))]
+     [(and (list? datum) (eqv? (car datum) 'when)) 
+      (when-exp (parse-exp (cadr datum)) (map parse-exp (cddr datum)))]
+     [(and (list? datum) (eqv? (car datum) 'cond)) 
+      (let ((transp (matrix-transpose (cdr datum))))
+	(cond-exp (map parse-exp (car transp)) (map parse-exp (cadr transp))))]
+     [(and (list? datum) (eqv? (car datum) 'case))
+      (let ((transp (matrix-transpose (cddr datum))))
+	(case-exp (parse-exp (cadr datum)) (map parse-exp (car transp)) (map parse-exp (cadr transp))))]
      [(symbol? datum) (var-exp datum)]
      [(literal? datum) (lit-exp datum)]
      [(pair? datum)
@@ -141,8 +149,11 @@
            [letrec-exp (vars vals body)
 		       (append (list 'letrec (combine-vars-vals vars (map unparse-exp vals)))
 			       (map unparse-exp body))]
+	   [while-exp (test body)
+		      (append (list 'while (unparse-exp test)) (map unparse-exp body))] 
            [app-exp (rand)
-                    (map unparse-exp rand)])))
+                    (map unparse-exp rand)]
+	   [else exp])))
 
 (define first
   (lambda (ls-of-ls)

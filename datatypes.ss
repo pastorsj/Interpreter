@@ -60,12 +60,19 @@
    (test expression?)
    (body (list-of expression?))]
   [cond-exp
-    (conditions (list-of expression?))
-    (bodies (list-of expression?))]
+   (conditions (list-of expression?))
+   (bodies (list-of expression?))]
   [and-exp
-    (body (list-of expression?))]
+   (body (list-of expression?))]
   [or-exp
-    (body (list-of expression?))])
+   (body (list-of expression?))]
+  [case-exp
+   (id expression?)
+   (conditions (list-of expression?))
+   (body (list-of expression?))]
+  [member-exp
+   (id expression?)
+   (body expression?)])
 
 	
 ; datatype for procedures.  At first there is only one
@@ -81,7 +88,10 @@
   [clos-improc
     (vars (list-of symbol?))
     (body (list-of expression?))
-    (env environment?)])
+    (env environment?)]
+  [member-proc
+   (item expression?)
+   (ls expression?)])
 	 
 	 
 	
