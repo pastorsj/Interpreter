@@ -55,6 +55,9 @@
    (test expression?)
    (body (list-of expression?))]
   [begin-exp
+   (body (list-of expression?))]
+  [while-exp
+   (test expression?)
    (body (list-of expression?))])
 
 	

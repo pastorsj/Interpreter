@@ -97,6 +97,8 @@
 	    (eopl:error 'parse-exp "declarations in let-expression not a list ~s" datum))]
        [(eqv? (car datum) 'begin)
 	(begin-exp (map parse-exp (cdr datum)))]
+       [(eqv? (car datum) 'while)
+	(while-exp (parse-exp (cadr datum)) (map parse-exp (cddr datum)))]
        [else (if (improper-list? datum) (eopl:error 'parse-exp "expression ~s is not a proper list" datum) (app-exp (map parse-exp datum)))])]
      [else (eopl:error 'parse-exp "bad expression: ~s" datum)])))
 

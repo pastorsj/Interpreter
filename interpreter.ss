@@ -46,6 +46,11 @@
 			       (clos-improc (append reqs non-req) body env)]
 	[lambda-exp-nolimit (id body)
 			    (clos-improc (list id) body env)]
+	[while-exp (test body)
+		   (if (eval-exp test env) 
+		       (eval-exp (app-exp '((lambda-exp () 
+					      (app-exp ((lambda-exp () body))) 
+					      (while-exp test body)))) env))]
         [else (eopl:error 'eval-exp "Bad abstract syntax: ~a" exp)]))))
  
 ; evaluate the list of operands, putting results into a list
@@ -79,7 +84,7 @@
                    "Attempt to apply bad procedure: ~s" 
                     proc-value)])))
 
-(define *prim-proc-names* '(+ - * / add1 sub1 zero? not = > >= < <= car cdr list null? assq eq? equal? eqv? atom? cons length list->vector list? pair? procedure? vector->list vector make-vector vector-ref vector? number? symbol? set-car! set-cdr!
+(define *prim-proc-names* '(+ - * / quotient add1 sub1 zero? not = > >= < <= car cdr list null? assq eq? equal? eqv? atom? cons length list->vector list? pair? procedure? vector->list vector make-vector vector-ref vector? number? symbol? set-car! set-cdr!
 	vector-set! display newline caar cadr cdar cddr caaar caadr cadar caddr cdaar cdadr cddar cdddr apply map))
 
 (define init-env         ; for now, our initial global environment only contains 
@@ -99,6 +104,7 @@
       [(-) (apply - args)]
       [(*) (apply * args)]
       [(/) (apply / args)]
+      [(quotient) (apply quotient args)]
       [(add1) (+ (1st args) 1)]
       [(sub1) (- (1st args) 1)]
       [(zero?) (= (1st args) 0)]
