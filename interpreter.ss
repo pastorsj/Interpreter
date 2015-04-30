@@ -33,6 +33,8 @@
 					  (eval-rands vals env)
 					  env)])
 		        (eval-bodies body new-env))]
+        [member-exp (item list)
+          (member (eval-exp item env) (map (lambda (x) (eval-exp x env)) list))]
         [if-exp (id true false)
 	        (if (eval-exp id env)
 		      (eval-exp true env)
@@ -180,15 +182,15 @@
 		  (app-exp (list (lambda-exp '() (map syntax-expand body))))]
        [cond-exp (conditions bodies)
         (cond
+          [(equal? (var-exp 'else) (car conditions)) (syntax-expand (car bodies))]
           [(null? (cdr conditions)) (if-exp-ne (syntax-expand (car conditions)) (syntax-expand (car bodies)))]
-          [(equal? (var-exp 'else) (cadr conditions)) (if-exp (syntax-expand (car conditions)) (syntax-expand (car bodies)) (syntax-expand (cadr bodies)))]
           [else (if-exp (syntax-expand (car conditions)) (syntax-expand (car bodies)) (syntax-expand (cond-exp (cdr conditions) (cdr bodies))))])]
        [and-exp (body)
         (if (null? body) (lit-exp #t)
-          (if-exp (syntax-expand (car body)) (syntax-expand (and-exp (cdr body))) (lit-exp #f)))]
+          (if-exp (car body) (syntax-expand (and-exp (cdr body))) (car body)))]
        [or-exp (body)
         (if (null? body) (lit-exp #f)
-        (if-exp (syntax-expand (car body)) (lit-exp #t) (syntax-expand (or-exp (cdr body)))))]
+        (if-exp (car body) (car body) (syntax-expand (or-exp (cdr body)))))]
        [if-exp (id true false)
 	       (if-exp (syntax-expand id)
 		       (syntax-expand true)
@@ -198,11 +200,12 @@
 		       (syntax-expand true))]
        [case-exp (id conditions bodies)
 		 (cond 
-		  [(null? (cdr conditions)) (if-exp-ne (syntax-expand (member id (cadar conditions))) (syntax-expand (car bodies)))]
-		  [(equal? (var-exp 'else) (cadr conditions)) (if-exp (syntax-expand (member id (cadar conditions))) (syntax-expand (car bodies)) (syntax-expand (cadr bodies)))]
-		  [else (if-exp (syntax-expand (member id (cadar conditions))) (syntax-expand (car bodies)) (syntax-expand (cond-exp (cdr conditions) (cdr bodies))))])]	 
+		  [(null? (cdr conditions)) (se (if-exp-ne (member-exp id (cadar conditions)) (car bodies)))]
+		  [(equal? (var-exp 'else) (cadr conditions)) (se (if-exp (member-exp id (cadar conditions)) (car bodies) (cadr bodies)))]
+		  [else (se (if-exp (member-exp id (cadar conditions)) (car bodies) (case-exp id (cdr conditions) (cdr bodies))))])]	 
        [else exp]))))
 
+(define se syntax-expand)
 
 (define rep      ; "read-eval-print" loop.
   (lambda ()

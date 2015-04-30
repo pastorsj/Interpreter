@@ -9,6 +9,8 @@
     (cond
      [(and (list? datum) (eqv? (car datum) 'quote)) 
       (quote-exp (cadr datum))]
+      [(and (list? datum) (eqv? (car datum) 'member)) 
+      (member-exp (parse-exp (cadr datum)) (cadar (map parse-exp (cddr datum))))]
      [(and (list? datum) (eqv? (car datum) 'and)) 
       (and-exp (map parse-exp (cdr datum)))]
      [(and (list? datum) (eqv? (car datum) 'or)) 

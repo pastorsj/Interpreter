@@ -72,7 +72,7 @@
    (body (list-of expression?))]
   [member-exp
    (id expression?)
-   (body expression?)])
+   (body (list-of expression?))])
 
 	
 ; datatype for procedures.  At first there is only one
