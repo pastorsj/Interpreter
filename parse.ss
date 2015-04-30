@@ -8,6 +8,8 @@
   (lambda (datum)
     (cond
      [(and (list? datum) (eqv? (car datum) 'quote)) (quote-exp (cadr datum))]
+     [(and (list? datum) (eqv? (car datum) 'and)) (and-exp (map parse-exp (cdr datum)))]
+     [(and (list? datum) (eqv? (car datum) 'or)) (or-exp (map parse-exp (cdr datum)))]
      [(and (list? datum) (eqv? (car datum) 'when)) (when-exp (parse-exp (cadr datum)) (map parse-exp (cddr datum)))]
      [(and (list? datum) (eqv? (car datum) 'cond)) (let ((transp (matrix-transpose (cdr datum))))
                                                       (cond-exp (map parse-exp (car transp)) (map parse-exp (cadr transp))))]

@@ -183,6 +183,12 @@
           [(null? (cdr conditions)) (if-exp-ne (car conditions) (car bodies))]
           [(equal? (var-exp 'else) (cadr conditions)) (if-exp (car conditions) (car bodies) (cadr bodies))]
           [else (if-exp (car conditions) (car bodies) (syntax-expand (cond-exp (cdr conditions) (cdr bodies))))])]
+       [and-exp (body)
+        (if (null? body) (lit-exp #t)
+          (if-exp (car body) (syntax-expand (and-exp (cdr body))) (lit-exp #f)))]
+       [or-exp (body)
+        (if (null? body) (lit-exp #f)
+        (if-exp (car body) (lit-exp #t) (syntax-expand (or-exp (cdr body)))))]
        [else exp]))))
 
 
@@ -230,3 +236,14 @@
 
 
 
+; <basic and logic>
+; (pred ls)
+; (if (pred (car ls)) (syntax-expand (and-exp (cdr ls))) (#f))
+
+; <basic or logic>
+; (pred ls)
+; (if (pred (car ls)) (#t) (syntax-expand (and-exp (cdr ls))))
+
+; <basic case logic>
+; (item ls1 ls2)
+; (if (member item (car ls1) (car ls2)) (syntax-expand (case-exp item (cdr ls1) (cdr ls2))))

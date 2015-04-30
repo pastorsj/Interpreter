@@ -61,7 +61,11 @@
    (body (list-of expression?))]
   [cond-exp
     (conditions (list-of expression?))
-    (bodies (list-of expression?))])
+    (bodies (list-of expression?))]
+  [and-exp
+    (body (list-of expression?))]
+  [or-exp
+    (body (list-of expression?))])
 
 	
 ; datatype for procedures.  At first there is only one
