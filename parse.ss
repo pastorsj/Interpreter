@@ -24,8 +24,11 @@
           (lambda-exp-nolimit (cadr datum)
 			      (map parse-exp (cddr datum)))]
          [(improper-list? (cadr datum))
-          (lambda-exp-improperls (cadr datum)
-                                 (map parse-exp (cddr datum)))])]
+	  (let ((res (split-list (cadr datum))))
+	    (lambda-exp-improperls 
+	     (car res)
+	     (cadr res)
+	     (map parse-exp (cddr datum))))])]
        [(eqv? (car datum) 'if)
         (cond
          [(or (> 2 (length (cdr datum))) (< 3 (length (cdr datum)))) (eopl:error 'parse-exp "if-expression ~s does not have (only) test, then, and else" datum)]
@@ -92,6 +95,8 @@
 				    (map parse-exp (cddr datum)))
 			(eopl:error 'parse-exp "declaration in let-exp must be a list of length 2 ~s" datum))))
 	    (eopl:error 'parse-exp "declarations in let-expression not a list ~s" datum))]
+       [(eqv? (car datum) 'begin)
+	(begin-exp (map parse-exp (cdr datum)))]
        [else (if (improper-list? datum) (eopl:error 'parse-exp "expression ~s is not a proper list" datum) (app-exp (map parse-exp datum)))])]
      [else (eopl:error 'parse-exp "bad expression: ~s" datum)])))
 
@@ -108,8 +113,8 @@
            [lambda-exp-nolimit (id body)
                                (append (list 'lambda id)
                                        (map unparse-exp body))]
-           [lambda-exp-improperls (id body)
-                                  (append (list 'lambda id)
+           [lambda-exp-improperls (reqs non-req body)
+                                  (append (list 'lambda (append reqs non-req))
                                           (map unparse-exp body))]
            [if-exp (test true false)
                    (list 'if (unparse-exp test)
@@ -168,6 +173,13 @@
         (boolean? exp)
         (string? exp)
 	(vector? exp))))
+
+(define split-list
+    (lambda (ls)
+      (let loop ((ls ls) (ls1 '()))
+	(cond [(improper-list? ls)
+	       (loop (cdr ls) (append ls1 (list (car ls))))]
+	      [else (list ls1 (list ls))]))))
 
 
 

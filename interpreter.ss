@@ -42,10 +42,10 @@
 		      (eval-exp true env))]
         [lambda-exp (id body)
 		    (clos-proc id body env)]
-	[lambda-exp-improperls (id body)
-			       (clos-proc id body env)]
+	[lambda-exp-improperls (reqs non-req body)
+			       (clos-improc (append reqs non-req) body env)]
 	[lambda-exp-nolimit (id body)
-			    (clos-proc (list id) body env)]
+			    (clos-improc (list id) body env)]
         [else (eopl:error 'eval-exp "Bad abstract syntax: ~a" exp)]))))
  
 ; evaluate the list of operands, putting results into a list
@@ -73,7 +73,8 @@
   (lambda (proc-value args)
     (cases proc-val proc-value
       [prim-proc (op) (apply-prim-proc op args)]
-			[clos-proc (vars body env) (eval-bodies body (extend-env vars args env))]
+      [clos-proc (vars body env) (eval-bodies body (extend-env vars args env))]
+      [clos-improc (vars body env) (eval-bodies body (extend-improper-env vars args env))]
       [else (error 'apply-proc
                    "Attempt to apply bad procedure: ~s" 
                     proc-value)])))
@@ -163,7 +164,15 @@
     (let exp-recur ((exp exp))
       (cases expression exp
        [let-exp (vars vals body)
-		(app-exp (append (list (lambda-exp vars body)) vals))]
+		(app-exp (append (list (lambda-exp vars (map syntax-expand body))) vals))]
+       [let*-exp (vars vals body)
+		 (syntax-expand (let-exp (list (car vars)) (list (car vals)) 
+					 (list (if (not (null? (cddr vals)))
+						   (let*-exp (cdr vars) (cdr vals) body)
+						   (let-exp (cdr vars) (cdr vals) body)))))]
+       [begin-exp (body)
+		  (app-exp (list (lambda-exp '() (map syntax-expand body))))]
+      
        [else exp]))))
 
 
@@ -177,7 +186,7 @@
       (rep))))  ; tail-recursive, so stack doesn't grow.
 
 (define eval-one-exp
-  (lambda (x) (top-level-eval (parse-exp x))))
+  (lambda (x) (top-level-eval (syntax-expand (parse-exp x)))))
 
 (define global-env init-env)
 

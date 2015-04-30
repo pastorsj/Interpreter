@@ -17,7 +17,7 @@
    (body (list-of expression?))]
   [lambda-exp-improperls
    (reqs (list-of symbol?))
-   (non-req symbol?)
+   (non-req (list-of symbol?))
    (body (list-of expression?))]
   [lambda-exp-nolimit
    (id symbol?)
@@ -53,6 +53,8 @@
    (id scheme-value?)]
   [when-exp
    (test expression?)
+   (body (list-of expression?))]
+  [begin-exp
    (body (list-of expression?))])
 
 	
@@ -65,8 +67,11 @@
   [clos-proc
     (vars (list-of symbol?))
     (body (list-of expression?))
+    (env environment?)]
+  [clos-improc
+    (vars (list-of symbol?))
+    (body (list-of expression?))
     (env environment?)])
-	 
 	 
 	 
 	

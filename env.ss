@@ -8,6 +8,13 @@
   (lambda (syms vals env)
     (extended-env-record syms vals env)))
 
+(define extend-improper-env
+  (lambda (syms vals env)
+    (let loop ((i (length syms)) (vals vals) (ls '()))
+      (if (= i 1)
+	  (extend-env syms (append ls (list vals)) env)
+	  (loop (- i 1) (cdr vals) (append ls (list (car vals))))))))
+
 (define list-find-position
   (lambda (sym los)
     (list-index (lambda (xsym) (eqv? sym xsym)) los)))
