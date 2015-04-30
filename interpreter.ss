@@ -178,7 +178,11 @@
 						   (let-exp (cdr vars) (cdr vals) body)))))]
        [begin-exp (body)
 		  (app-exp (list (lambda-exp '() (map syntax-expand body))))]
-      
+       [cond-exp (conditions bodies)
+        (cond
+          [(null? (cdr conditions)) (if-exp-ne (car conditions) (car bodies))]
+          [(equal? (var-exp 'else) (cadr conditions)) (if-exp (car conditions) (car bodies) (cadr bodies))]
+          [else (if-exp (car conditions) (car bodies) (syntax-expand (cond-exp (cdr conditions) (cdr bodies))))])]
        [else exp]))))
 
 

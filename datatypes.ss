@@ -58,7 +58,10 @@
    (body (list-of expression?))]
   [while-exp
    (test expression?)
-   (body (list-of expression?))])
+   (body (list-of expression?))]
+  [cond-exp
+    (conditions (list-of expression?))
+    (bodies (list-of expression?))])
 
 	
 ; datatype for procedures.  At first there is only one

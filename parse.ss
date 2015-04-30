@@ -9,6 +9,8 @@
     (cond
      [(and (list? datum) (eqv? (car datum) 'quote)) (quote-exp (cadr datum))]
      [(and (list? datum) (eqv? (car datum) 'when)) (when-exp (parse-exp (cadr datum)) (map parse-exp (cddr datum)))]
+     [(and (list? datum) (eqv? (car datum) 'cond)) (let ((transp (matrix-transpose (cdr datum))))
+                                                      (cond-exp (map parse-exp (car transp)) (map parse-exp (cadr transp))))]
      [(symbol? datum) (var-exp datum)]
      [(literal? datum) (lit-exp datum)]
      [(pair? datum)
