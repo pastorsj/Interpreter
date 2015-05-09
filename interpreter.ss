@@ -26,8 +26,8 @@
 			              (error 'apply-env "variable ~s is not bound" id)))))]
         [app-exp (rands)
 	        (let ([proc-value (eval-exp (car rands) env)]
-		    [args (eval-rands (cdr rands) env)])
-		      (apply-proc proc-value args))]
+		        [args (eval-rands (cdr rands) env)])
+		        (apply-proc proc-value args))]
         [let-exp (vars vals body)
 	        (let ([new-env (extend-env vars
 					  (eval-rands vals env)

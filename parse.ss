@@ -207,7 +207,7 @@
 	  [(and (list? (cadar list-of-list)) (equal? (caadar list-of-list) 'lambda))
 	   (find-idss (cdr list-of-list) (cons (car (cdadar list-of-list)) ls))]
 	  [else 
-	   (find-idss (cdr list-of-list) ls)])))
+	   (find-idss (cdr list-of-list) (cons '() ls))])))
 
 
 

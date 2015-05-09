@@ -44,7 +44,5 @@
        (let ([pos
 	      (list-find-position sym procnames)])
 	 (if (number? pos)
-	     (clos-proc (list-ref idss pos)
-			(list (list-ref bodies pos))
-			env)
-	     (apply-env old-env sym)))))))
+			(eval-exp (list-ref bodies pos) env)
+	    (apply-env old-env sym succeed fail)))))))
