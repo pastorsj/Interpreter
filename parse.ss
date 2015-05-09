@@ -66,10 +66,10 @@
 		(if (not (andmap symbol? (map car (caddr datum))))
 		    (eopl:error 'parse-exp "vars in let-exp must be symbols ~s" datum)
 		    (if (andmap len-2-ls (caddr datum))
-			(named-let (parse-exp (cadr datum))
+			(syntax-expand (named-let (cadr datum)
 				   (first (caddr datum))
 				   (map parse-exp (last (caddr datum)))
-				   (map parse-exp (cddr datum)))
+				   (map parse-exp (cdddr datum))))
 			(eopl:error 'parse-exp "declaration in let-exp must be a list of length 2 ~s" datum))))
 	    (eopl:error 'parse-exp "declarations in let-expression not a list ~s" datum))]
        [(and (eqv? (car datum) 'let) (list? (cadr datum)))
@@ -204,17 +204,7 @@
 (define find-idss
   (lambda (list-of-list ls)
     (cond [(null? list-of-list) (reverse ls)]
-	  [(and (list? (cadar list-of-list)) (equal? (caadar list-of-list) 'lambda))
+	  [(and (and (not (null? (cadar list-of-list))) (list? (cadar list-of-list))) (equal? (caadar list-of-list) 'lambda))
 	   (find-idss (cdr list-of-list) (cons (car (cdadar list-of-list)) ls))]
 	  [else 
 	   (find-idss (cdr list-of-list) (cons '() ls))])))
-
-
-
-
-
-
-
-
-
-

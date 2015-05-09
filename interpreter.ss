@@ -182,6 +182,8 @@
 					 (list (if (not (null? (cddr vals)))
 						   (let*-exp (cdr vars) (cdr vals) body)
 						   (let-exp (cdr vars) (cdr vals) body)))))]
+        [named-let (name vars vals body)
+          (letrec-exp (cons name vars) (cons vars (find-idss vals '())) (cons (lambda-exp vars body) vals) (list (app-exp (cons (parse-exp name) vals))))]
        [begin-exp (body)
 		  (app-exp (list (lambda-exp '() (map syntax-expand body))))]
        [cond-exp (conditions bodies)
@@ -227,8 +229,15 @@
 
 (define extend-env-recursively
   (lambda (proc-names idss bodies old-env)
-    (recursively-extended-env-record
-     proc-names idss bodies old-env)))
+    (let ((res (clean-vars proc-names bodies '(() ()))))
+      (recursively-extended-env-record
+        (car res) idss (cadr res) old-env))))
+
+(define clean-vars
+  (lambda (idss bodies ls)
+    (cond [(null? idss) (cons (reverse (car ls)) (list (reverse (cadr ls))))]
+          [(equal? (parse-exp (car idss)) (car bodies)) (clean-vars (cdr idss) (cdr bodies) ls)]
+          [else (clean-vars (cdr idss) (cdr bodies) (list (cons (car idss) (car ls)) (cons (car bodies) (cadr ls))))])))
 
 (define 1st car)
 (define 2nd cadr)
