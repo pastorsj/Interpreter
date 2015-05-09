@@ -105,6 +105,7 @@
 		    (eopl:error 'parse-exp "vars in let-exp must be symbols ~s" datum)
 		    (if (andmap len-2-ls (cadr datum))
 			(letrec-exp (first (cadr datum))
+				    (find-idss (cadr datum) '())
 				    (map parse-exp (last (cadr datum)))
 				    (map parse-exp (cddr datum)))
 			(eopl:error 'parse-exp "declaration in let-exp must be a list of length 2 ~s" datum))))
@@ -199,6 +200,14 @@
 	(cond [(improper-list? ls)
 	       (loop (cdr ls) (append ls1 (list (car ls))))]
 	      [else (list ls1 (list ls))]))))
+
+(define find-idss
+  (lambda (list-of-list ls)
+    (cond [(null? list-of-list) (reverse ls)]
+	  [(and (list? (cadar list-of-list)) (equal? (caadar list-of-list) 'lambda))
+	   (find-idss (cdr list-of-list) (cons (car (cdadar list-of-list)) ls))]
+	  [else 
+	   (find-idss (cdr list-of-list) ls)])))
 
 
 

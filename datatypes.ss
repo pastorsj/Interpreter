@@ -43,9 +43,10 @@
    (vals (list-of expression?))
    (body (list-of expression?))]
   [letrec-exp
-   (vars (list-of symbol?))
-   (vals (list-of expression?))
-   (body (list-of expression?))]
+   (procnames (list-of symbol?))
+   (idss (list-of (list-of symbol?)))
+   (bodies (list-of expression?))
+   (letrec-body (list-of expression?))]
   [set-exp
    (id symbol?)
    (body expression?)]
@@ -101,8 +102,13 @@
   (lambda (x) #t))
 
 (define-datatype environment environment?
-  (empty-env-record)
-  (extended-env-record
+  [empty-env-record]
+  [extended-env-record
    (syms (list-of symbol?))
    (vals (list-of scheme-value?))
-   (env environment?)))
+   (env environment?)]
+  [recursively-extended-env-record
+   (proc-names (list-of symbol?))
+   (idss (list-of (list-of symbol?)))
+   (bodies (list-of expression?))
+   (env environment?)])

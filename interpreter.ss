@@ -33,6 +33,10 @@
 					  (eval-rands vals env)
 					  env)])
 		        (eval-bodies body new-env))]
+	[letrec-exp (procnames idss body letrec-body)
+		    (eval-bodies letrec-body
+			      (extend-env-recursively
+			       procnames idss body env))]
         [member-exp (item list)
           (member (eval-exp item env) (map (lambda (x) (eval-exp x env)) list))]
         [if-exp (id true false)
@@ -220,6 +224,11 @@
   (lambda (x) (top-level-eval (syntax-expand (parse-exp x)))))
 
 (define global-env init-env)
+
+(define extend-env-recursively
+  (lambda (proc-names idss bodies old-env)
+    (recursively-extended-env-record
+     proc-names idss bodies old-env)))
 
 (define 1st car)
 (define 2nd cadr)
