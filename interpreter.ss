@@ -264,22 +264,3 @@
     (if (null? m)
 	'()
 	(cons (cdr (car m)) (get-new-matrix (cdr m))))))
-
-;(define let-exp->lambda-exp
-;  (lambda (expression)
-;    (app-exp (list (lambda-exp (id body
-
-
-
-
-; <basic and logic>
-; (pred ls)
-; (if (pred (car ls)) (syntax-expand (and-exp (cdr ls))) (#f))
-
-; <basic or logic>
-; (pred ls)
-; (if (pred (car ls)) (#t) (syntax-expand (and-exp (cdr ls))))
-
-; <basic case logic>
-; (item ls1 ls2)
-; (if (member item (car ls1) (car ls2)) (syntax-expand (case-exp item (cdr ls1) (cdr ls2))))
