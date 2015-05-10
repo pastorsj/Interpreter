@@ -44,7 +44,7 @@
    (body (list-of expression?))]
   [letrec-exp
    (procnames (list-of symbol?))
-   (idss (list-of (list-of symbol?)))
+   (idss (list-of (lambda (x) (ormap (lambda (pred) (pred x)) (list improper-list? (list-of symbol?))))))
    (bodies (list-of expression?))
    (letrec-body (list-of expression?))]
   [set-exp
@@ -109,6 +109,6 @@
    (env environment?)]
   [recursively-extended-env-record
    (proc-names (list-of symbol?))
-   (idss (list-of (list-of symbol?)))
+   (idss (list-of (lambda (x) (ormap (lambda (pred) (pred x)) (list improper-list? (list-of symbol?))))))
    (bodies (list-of expression?))
    (env environment?)])

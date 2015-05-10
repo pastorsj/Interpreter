@@ -11,6 +11,7 @@
   (let ([identity-proc (lambda (x) x)])
     (lambda (exp env)
       (cases expression exp
+        [cond-exp (conds bodies) (eval-exp (syntax-expand exp) env)]
         [quote-exp (datum) datum]
         [when-exp (test bodies) (if (eval-exp test env) (eval-bodies bodies env))]
         [lit-exp (datum) datum]
@@ -91,7 +92,7 @@
                     proc-value)])))
 
 (define *prim-proc-names* '(+ - * / quotient add1 sub1 zero? not = > >= < <= car cdr list null? assq eq? equal? eqv? atom? cons length list->vector list? pair? procedure? vector->list vector make-vector vector-ref vector? number? symbol? set-car! set-cdr!
-	vector-set! display newline caar cadr cdar cddr caaar caadr cadar caddr cdaar cdadr cddar cdddr apply map))
+	vector-set! display newline caar cadr cdar cddr caaar caadr cadar caddr cdaar cdadr cddar cdddr apply map append list-tail))
 
 (define init-env         ; for now, our initial global environment only contains 
   (extend-env            ; procedure names.  Recall that an environment associates
@@ -125,6 +126,7 @@
       [(car) (car (1st args))]
       [(cdr) (if (null? (1st args)) (eopl:error 'apply-prim-proc "cannot take cdr of ~s" (1st args)) (cdr (1st args)))]
       [(list) args]
+      [(append) (append (1st args) (2nd args))]
       [(null?) (null? (1st args))]
       [(assq) (assq (1st args) (2nd args))]
       [(eq?) (eq? (1st args) (2nd args))]
@@ -134,6 +136,7 @@
       [(length) (length (1st args))]
       [(list->vector) (list->vector (1st args))]
       [(list?) (list? (1st args))]
+      [(list-tail) (list-tail (1st args) (2nd args))]
       [(pair?) (pair? (1st args))]
       [(procedure?) (proc-val? (1st args))]
       [(vector->list) (vector->list (1st args))]
