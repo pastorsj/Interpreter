@@ -73,7 +73,11 @@
    (body (list-of expression?))]
   [member-exp
    (id expression?)
-   (body (list-of expression?))])
+   (body (list-of expression?))]
+  [case-lambda-exp
+   (idss (list-of (list-of symbol?)))
+   (lens (list-of number?))
+   (bodies (list-of (list-of expression?)))])
 
 	
 ; datatype for procedures.  At first there is only one
@@ -90,6 +94,11 @@
     (vars (list-of symbol?))
     (body (list-of expression?))
     (env environment?)]
+  [case-clos-proc
+   (idss (list-of (list-of symbol?)))
+   (lens (list-of number?))
+   (bodies (list-of (list-of expression?)))
+   (env environment?)]
   [member-proc
    (item expression?)
    (ls expression?)])

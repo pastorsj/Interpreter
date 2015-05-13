@@ -49,6 +49,8 @@
 		      (eval-exp true env))]
         [lambda-exp (id body)
 		    (clos-proc id body env)]
+        [case-lambda-exp (idss lens bodies)
+          (case-clos-proc idss lens bodies env)]
 	[lambda-exp-improperls (reqs non-req body)
 			       (clos-improc (append reqs non-req) body env)]
 	[lambda-exp-nolimit (id body)
@@ -86,6 +88,8 @@
     (cases proc-val proc-value
       [prim-proc (op) (apply-prim-proc op args)]
       [clos-proc (vars body env) (eval-bodies body (extend-env vars args env))]
+      [case-clos-proc (idss lens bodies env) (let ((pos (list-find-position (length args) lens)))
+                                                (eval-bodies (list-ref bodies pos) (extend-env (list-ref idss pos) args env)))]
       [clos-improc (vars body env) (eval-bodies body (extend-improper-env vars args env))]
       [else (error 'apply-proc
                    "Attempt to apply bad procedure: ~s" 
@@ -251,7 +255,7 @@
   (lambda (m)
     (if (null? (car m))
 	'()
-	(cons (get-firsts m) (matrix-transpose (get-new-matrix m))))))
+	(cons (get-firsts m) (list (get-new-matrix m))))))
 
 (define get-firsts 
   (lambda (m)

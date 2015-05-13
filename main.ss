@@ -1,3 +1,4 @@
+
 ; evaluator for simple expressions.
 ; Possible starting point for first interpreter assignment.
 ;                  
@@ -21,3 +22,4 @@
 (define l load-all) ; even easier!
 
 (l)
+
