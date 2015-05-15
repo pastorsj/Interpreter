@@ -18,11 +18,11 @@
         [var-exp (id) ; look up its value.
           (apply-env env
             id
-	          identity-proc ; procedure to call if var is in env 
+	          unbox ; procedure to call if var is in env 
 	          (lambda () ; procedure to call if var is not in env
 	            (apply-env global-env  ; was init-env
 		            id
-		            identity-proc
+		            unbox
 		              (lambda ()
 			              (error 'apply-env "variable ~s is not bound" id)))))]
         [app-exp (rands)
