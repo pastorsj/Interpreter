@@ -7,7 +7,7 @@
   [lit-exp
    (datum
     (lambda (x)
-      (ormap 
+      (ormap
        (lambda (pred) (pred x))
        (list number? vector? boolean? symbol? string? pair? null?))))]
   [app-exp
@@ -77,15 +77,18 @@
   [case-lambda-exp
    (idss (list-of (list-of symbol?)))
    (lens (list-of number?))
-   (bodies (list-of (list-of expression?)))])
+   (bodies (list-of (list-of expression?)))]
+  [define-exp
+   (id symbol?)
+   (body expression?)])
 
-	
+
 ; datatype for procedures.  At first there is only one
 ; kind of procedure, but more kinds will be added later.
 
 (define-datatype proc-val proc-val?
   [prim-proc
-   (name symbol?)]   
+   (name symbol?)]
   [clos-proc
     (vars (list-of symbol?))
     (body (list-of expression?))
@@ -102,9 +105,9 @@
   [member-proc
    (item expression?)
    (ls expression?)])
-	 
-	 
-	
+
+
+
 ;; environment type definitions
 
 (define scheme-value?
@@ -118,6 +121,10 @@
    (env environment?)]
   [recursively-extended-env-record
    (proc-names (list-of symbol?))
-   (idss (list-of (lambda (x) (ormap (lambda (pred) (pred x)) (list improper-list? (list-of symbol?))))))
+   (idss (list-of (lambda (x)
+                    (ormap (lambda (pred) (pred x))
+                      (list improper-list? (list-of symbol?))))))
    (bodies (list-of expression?))
    (env environment?)])
+
+;For cells, use box datatype

@@ -11,6 +11,13 @@
   (let ([identity-proc (lambda (x) x)])
     (lambda (exp env)
       (cases expression exp
+        [define-exp (id body) (set! global-env (extend-env (list id) (list (eval-exp body env)) global-env))]
+        [set-exp (var val) (apply-env env var
+                              (lambda (x) (set-box! x (eval-exp val env)))
+                              (lambda ()
+                                (apply-env global-env var
+                                  (lambda (x) (set-box! x (eval-exp val env)))
+                              void)))]
         [cond-exp (conds bodies) (eval-exp (syntax-expand exp) env)]
         [quote-exp (datum) datum]
         [when-exp (test bodies) (if (eval-exp test env) (eval-bodies bodies env))]
@@ -18,12 +25,14 @@
         [var-exp (id) ; look up its value.
           (apply-env env
             id
-	          unbox ; procedure to call if var is in env 
-	          (lambda () ; procedure to call if var is not in env
+	          ;identity-proc ; procedure to call if var is in env
+	          unbox
+            (lambda () ; procedure to call if var is not in env
 	            (apply-env global-env  ; was init-env
 		            id
+		            ;identity-proc
 		            unbox
-		              (lambda ()
+                  (lambda ()
 			              (error 'apply-env "variable ~s is not bound" id)))))]
         [app-exp (rands)
 	        (let ([proc-value (eval-exp (car rands) env)]
@@ -56,17 +65,17 @@
 	[lambda-exp-nolimit (id body)
 			    (clos-improc (list id) body env)]
 	[while-exp (test body)
-		   (if (eval-exp test env) 
-		       (eval-exp (app-exp `((lambda-exp () 
-					      ((app-exp ((lambda-exp ()  ,body))) 
+		   (if (eval-exp test env)
+		       (eval-exp (app-exp `((lambda-exp ()
+					      ((app-exp ((lambda-exp ()  ,body)))
 					      (while-exp ,test ,body))))) env))]
         [else (eopl:error 'eval-exp "Bad abstract syntax: ~a" exp)]))))
- 
+
 ; evaluate the list of operands, putting results into a list
 
 (define eval-rands
   (lambda (rands env)
-    (map (lambda (x) 
+    (map (lambda (x)
 	   (eval-exp x env)) rands)))
 
 ; evaluate a list of procedures, returning the last one (used for lets)
@@ -80,7 +89,7 @@
         (eval-bodies (cdr bodies) env)))))
 
 ;  Apply a procedure to its arguments.
-;  At this point, we only have primitive procedures.  
+;  At this point, we only have primitive procedures.
 ;  User-defined procedures will be added later.
 
 (define apply-proc
@@ -92,20 +101,21 @@
                                                 (eval-bodies (list-ref bodies pos) (extend-env (list-ref idss pos) args env)))]
       [clos-improc (vars body env) (eval-bodies body (extend-improper-env vars args env))]
       [else (error 'apply-proc
-                   "Attempt to apply bad procedure: ~s" 
+                   "Attempt to apply bad procedure: ~s"
                     proc-value)])))
 
 (define *prim-proc-names* '(+ - * / quotient add1 sub1 zero? not = > >= < <= car cdr list null? assq eq? equal? eqv? atom? cons length list->vector list? pair? procedure? vector->list vector make-vector vector-ref vector? number? symbol? set-car! set-cdr!
 	vector-set! display newline caar cadr cdar cddr caaar caadr cadar caddr cdaar cdadr cddar cdddr apply map append list-tail))
 
-(define init-env         ; for now, our initial global environment only contains 
+(define init-env
+  (lambda ()              ; for now, our initial global environment only contains
   (extend-env            ; procedure names.  Recall that an environment associates
      *prim-proc-names*   ;  a value (not an expression) with an identifier.
-     (map prim-proc      
+     (map prim-proc
           *prim-proc-names*)
-     (empty-env)))
+     (empty-env))))
 
-; Usually an interpreter must define each 
+; Usually an interpreter must define each
 ; built-in procedure individually.  We are "cheating" a little bit.
 
 (define apply-prim-proc
@@ -171,9 +181,9 @@
       [(cdaar) (cdr (car (car (1st args))))]
       [(cdadr) (cdr (car (cdr (1st args))))]
       [(apply) (apply-proc (1st args) (2nd args))]
-      [(map) (map (lambda (x) (apply-proc (1st args) x)) (matrix-transpose (cdr args)))]
-      [else (error 'apply-prim-proc 
-            "Bad primitive procedure name: ~s" 
+      [(map) (map (lambda (x) (apply-proc (1st args) x)) (matrix-transpose-map (cdr args)))]
+      [else (error 'apply-prim-proc
+            "Bad primitive procedure name: ~s"
             prim-op)])))
 
 ;syntax-expand procedure
@@ -185,7 +195,7 @@
        [let-exp (vars vals body)
 		(app-exp (append (list (lambda-exp vars (map syntax-expand body))) vals))]
        [let*-exp (vars vals body)
-		 (syntax-expand (let-exp (list (car vars)) (list (car vals)) 
+		 (syntax-expand (let-exp (list (car vars)) (list (car vals))
 					 (list (if (not (null? (cddr vals)))
 						   (let*-exp (cdr vars) (cdr vals) body)
 						   (let-exp (cdr vars) (cdr vals) body)))))]
@@ -212,10 +222,10 @@
 	       (if-exp-ne (syntax-expand id)
 		       (syntax-expand true))]
        [case-exp (id conditions bodies)
-		 (cond 
+		 (cond
 		  [(null? (cdr conditions)) (se (if-exp-ne (member-exp id (cadar conditions)) (car bodies)))]
 		  [(equal? (var-exp 'else) (cadr conditions)) (se (if-exp (member-exp id (cadar conditions)) (car bodies) (cadr bodies)))]
-		  [else (se (if-exp (member-exp id (cadar conditions)) (car bodies) (case-exp id (cdr conditions) (cdr bodies))))])]	 
+		  [else (se (if-exp (member-exp id (cadar conditions)) (car bodies) (case-exp id (cdr conditions) (cdr bodies))))])]
        [else exp]))))
 
 (define se syntax-expand)
@@ -232,7 +242,11 @@
 (define eval-one-exp
   (lambda (x) (top-level-eval (syntax-expand (parse-exp x)))))
 
-(define global-env init-env)
+(define global-env (init-env))
+
+(define reset-global-env
+  (lambda ()
+    (set! global-env (init-env))))
 
 (define extend-env-recursively
   (lambda (proc-names idss bodies old-env)
@@ -257,7 +271,13 @@
 	'()
 	(cons (get-firsts m) (list (get-new-matrix m))))))
 
-(define get-firsts 
+  (define matrix-transpose-map
+    (lambda (m)
+      (if (null? (car m))
+  	'()
+  	(cons (get-firsts m) (matrix-transpose-map (get-new-matrix m))))))
+
+(define get-firsts
   (lambda (m)
     (if (null? m)
 	'()

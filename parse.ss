@@ -4,24 +4,24 @@
 
 ; Procedures to make the parser a little bit saner.
 
-(define parse-exp         
+(define parse-exp
   (lambda (datum)
     (cond
-      [(and (list? datum) (eqv? (car datum) 'quote)) 
+      [(and (list? datum) (eqv? (car datum) 'quote))
         (quote-exp (cadr datum))]
-      [(and (list? datum) (eqv? (car datum) 'member)) 
+      [(and (list? datum) (eqv? (car datum) 'member))
         (member-exp (parse-exp (cadr datum)) (cadar (map parse-exp (cddr datum))))]
-      [(and (list? datum) (eqv? (car datum) 'and)) 
+      [(and (list? datum) (eqv? (car datum) 'and))
         (and-exp (map parse-exp (cdr datum)))]
-      [(and (list? datum) (eqv? (car datum) 'or)) 
+      [(and (list? datum) (eqv? (car datum) 'or))
         (syntax-expand (or-exp (map parse-exp (cdr datum))))]
-      [(and (list? datum) (eqv? (car datum) 'when)) 
+      [(and (list? datum) (eqv? (car datum) 'when))
         (when-exp (parse-exp (cadr datum)) (map parse-exp (cddr datum)))]
-      [(and (list? datum) (eqv? (car datum) 'cond)) 
-        (let ((transp (matrix-transpose (cdr datum))))
+      [(and (list? datum) (eqv? (car datum) 'cond))
+        (let ((transp (matrix-transpose-map (cdr datum))))
 	        (cond-exp (map parse-exp (car transp)) (map parse-exp (cadr transp))))]
       [(and (list? datum) (eqv? (car datum) 'case))
-        (let ((transp (matrix-transpose (cddr datum))))
+        (let ((transp (matrix-transpose-map (cddr datum))))
 	        (case-exp (parse-exp (cadr datum)) (map parse-exp (car transp)) (map parse-exp (cadr transp))))]
       [(symbol? datum) (var-exp datum)]
       [(literal? datum) (lit-exp datum)]
@@ -41,7 +41,7 @@
                 (lambda-exp-nolimit (cadr datum) (map parse-exp (cddr datum)))]
               [(improper-list? (cadr datum))
 	              (let ((res (split-list (cadr datum))))
-	                (lambda-exp-improperls 
+	                (lambda-exp-improperls
 	                  (car res)
 	                  (cadr res)
 	                  (map parse-exp (cddr datum))))])]
@@ -59,6 +59,8 @@
 	          (if (= (length (cdr datum)) 2)
 	            (set-exp (cadr datum) (parse-exp (caddr datum)))
               (eopl:error 'parse-exp "set! expression ~s does not have (only) variable and expression" datum))]
+          [(eqv? (car datum) 'define)
+            (define-exp (cadr datum) (parse-exp (caddr datum)))]
           [(and (eqv? (car datum) 'let) (> 3 (length datum))) (eopl:error 'parse-exp "let-expression has incorrect length ~s" datum)]
           [(and (eqv? (car datum) 'let) (symbol? (cadr datum)))
 	          (if (list-of-list? (caddr datum))
@@ -87,7 +89,7 @@
 		            (if (not (andmap symbol? (map car (cadr datum))))
 		              (eopl:error 'parse-exp "vars in let-exp must be symbols ~s" datum)
 		              (if (andmap len-2-ls (cadr datum))
-			              (let*-exp (first (cadr datum)) (map parse-exp (last (cadr datum))) (map parse-exp (cddr datum)))
+			              (se (let*-exp (first (cadr datum)) (map parse-exp (last (cadr datum))) (map parse-exp (cddr datum))))
 			              (eopl:error 'parse-exp "declaration in let-exp must be a list of length 2 ~s" datum))))
 	          (eopl:error 'parse-exp "declarations in let-expression not a list ~s" datum))]
           [(and (eqv? (car datum) 'letrec) (> 3 (length datum))) (eopl:error 'parse-exp "letrec-expression has incorrect length ~s" datum)]
@@ -102,7 +104,7 @@
 			              (eopl:error 'parse-exp "declaration in let-exp must be a list of length 2 ~s" datum))))
 	          (eopl:error 'parse-exp "declarations in let-expression not a list ~s" datum))]
           [(eqv? (car datum) 'begin)
-	          (begin-exp (map parse-exp (cdr datum)))]
+	          (syntax-expand (begin-exp (map parse-exp (cdr datum))))]
           [(eqv? (car datum) 'while)
 	          (while-exp (parse-exp (cadr datum)) (map parse-exp (cddr datum)))]
           [else (if (improper-list? datum) (eopl:error 'parse-exp "expression ~s is not a proper list" datum) (app-exp (map parse-exp datum)))])]
@@ -136,7 +138,7 @@
                             (map unparse-exp body))]
            [named-let (name vars vals body)
                       (append (list 'let name (combine-vars-vals vars (map unparse-exp vals)))
-                              (map unparse-exp body))] 
+                              (map unparse-exp body))]
            [let*-exp (vars vals body)
                      (append (list 'let* (combine-vars-vals vars (map unparse-exp vals)))
                              (map unparse-exp body))]
@@ -144,7 +146,7 @@
 		       (append (list 'letrec (combine-vars-vals vars (map unparse-exp vals)))
 			       (map unparse-exp body))]
 	   [while-exp (test body)
-		      (append (list 'while (unparse-exp test)) (map unparse-exp body))] 
+		      (append (list 'while (unparse-exp test)) (map unparse-exp body))]
            [app-exp (rand)
                     (map unparse-exp rand)]
 	   [else exp])))
@@ -197,5 +199,5 @@
     (cond [(null? list-of-list) (reverse ls)]
 	  [(and (and (not (null? (cadar list-of-list))) (list? (cadar list-of-list))) (equal? (caadar list-of-list) 'lambda))
 	   (find-idss (cdr list-of-list) (cons (car (cdadar list-of-list)) ls))]
-	  [else 
+	  [else
 	   (find-idss (cdr list-of-list) (cons '() ls))])))
