@@ -4,6 +4,8 @@
 (define-datatype expression expression?
   [var-exp
    (id symbol?)]
+  [ref-exp
+   (id symbol?)]
   [lit-exp
    (datum
     (lambda (x)
@@ -13,7 +15,7 @@
   [app-exp
    (rand (list-of expression?))]
   [lambda-exp
-   (id (list-of symbol?))
+   (id (list-of sym-or-ref?))
    (body (list-of expression?))]
   [lambda-exp-improperls
    (reqs (list-of symbol?))
@@ -48,7 +50,7 @@
    (bodies (list-of expression?))
    (letrec-body (list-of expression?))]
   [set-exp
-   (id symbol?)
+   (id expression?)
    (body expression?)]
   [quote-exp
    (id scheme-value?)]
@@ -90,7 +92,7 @@
   [prim-proc
    (name symbol?)]
   [clos-proc
-    (vars (list-of symbol?))
+    (vars (list-of sym-or-ref?))
     (body (list-of expression?))
     (env environment?)]
   [clos-improc

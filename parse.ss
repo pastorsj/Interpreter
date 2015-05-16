@@ -34,8 +34,8 @@
             (cond
               [(= 2 (length datum)) (eopl:error 'parse-exp "lambda-expression: incorrect length ~s" datum)]
               [(list? (cadr datum))
-                (if (andmap symbol? (cadr datum))
-	                (lambda-exp (cadr datum) (map parse-exp (cddr datum)))
+                (if (andmap sym-or-ref? (cadr datum))
+	                (lambda-exp (cadr datum) (parse-refs (find-ref (cadr datum)) (map parse-exp (cddr datum))))
                   (eopl:error 'parse-exp "lambda's formal arguments ~s must all be symbols" (cadr datum)))]
               [(symbol? (cadr datum))
                 (lambda-exp-nolimit (cadr datum) (map parse-exp (cddr datum)))]
@@ -57,7 +57,7 @@
 		            (parse-exp (caddr datum)))])]
           [(eqv? (car datum) 'set!)
 	          (if (= (length (cdr datum)) 2)
-	            (set-exp (cadr datum) (parse-exp (caddr datum)))
+	            (set-exp (parse-exp (cadr datum)) (parse-exp (caddr datum))) ;;SET_EXP EXPRESSION
               (eopl:error 'parse-exp "set! expression ~s does not have (only) variable and expression" datum))]
           [(eqv? (car datum) 'define)
             (define-exp (cadr datum) (parse-exp (caddr datum)))]
@@ -79,7 +79,7 @@
 		            (if (not (andmap symbol? (map car (cadr datum))))
 		              (eopl:error 'parse-exp "vars in let-exp must be symbols ~s" datum)
 		              (if (andmap len-2-ls (cadr datum))
-			              (let-exp (first (cadr datum)) (map parse-exp (last (cadr datum))) (map parse-exp (cddr datum)))
+			              (se (let-exp (first (cadr datum)) (map parse-exp (last (cadr datum))) (map parse-exp (cddr datum)))) ;;LET EXPRESSION
 			              (eopl:error 'parse-exp "declaration in let-exp must be a list of length 2 ~s" datum))))
 	            (eopl:error 'parse-exp "declarations in let-expression not a list ~s" datum))]
           [(eqv? (car datum) 'let*)
@@ -109,6 +109,28 @@
 	          (while-exp (parse-exp (cadr datum)) (map parse-exp (cddr datum)))]
           [else (if (improper-list? datum) (eopl:error 'parse-exp "expression ~s is not a proper list" datum) (app-exp (map parse-exp datum)))])]
         [else (eopl:error 'parse-exp "bad expression: ~s" datum)])))
+
+(define parse-refs
+  (lambda (ls exp)
+    (cond [(null? exp) exp]
+          [(expression? exp)
+            (cases expression exp
+                [var-exp (id) (if (member id ls)
+                                  (ref-exp id)
+                                  exp)]
+                [lit-exp (id) exp]
+                [app-exp (id) (app-exp (parse-refs ls id))]
+                [set-exp (id body) (set-exp (parse-refs ls id) (parse-refs ls body))]
+                [lambda-exp (id body) (lambda-exp id (parse-refs ls body))]
+                [else exp])]
+          [(list-of expression?) (cons (parse-refs ls (car exp)) (parse-refs ls (cdr exp)))])))
+
+(define find-ref
+  (lambda (ls)
+    (cond [(null? ls) ls]
+          [(list? (car ls))
+                  (cons (cadar ls) (find-ref (cdr ls)))]
+          [else (find-ref (cdr ls))])))
 
 (define unparse-exp
   (lambda (exp)
@@ -169,6 +191,10 @@
   (lambda (ls)
     (and (list? ls)
          (andmap list? ls))))
+
+(define sym-or-ref?
+  (lambda (x) (or (symbol? x)
+              (and (list? x) (eqv? (car x) 'ref)))))
 
 (define len-2-ls
   (lambda (ls)

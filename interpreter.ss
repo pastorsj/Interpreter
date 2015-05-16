@@ -11,11 +11,23 @@
   (let ([identity-proc (lambda (x) x)])
     (lambda (exp env)
       (cases expression exp
+        [ref-exp (id) ; look up its value.
+          (apply-env env
+            id
+	          ;identity-proc ; procedure to call if var is in env
+	          unbox
+            (lambda () ; procedure to call if var is not in env
+	            (apply-env global-env  ; was init-env
+		            id
+		            ;identity-proc
+		            unbox
+                  (lambda ()
+			              (error 'apply-env "variable ~s is not bound" id)))))]
         [define-exp (id body) (set! global-env (extend-env (list id) (list (eval-exp body env)) global-env))]
-        [set-exp (var val) (apply-env env var
+        [set-exp (var val) (apply-env env (cadr var)
                               (lambda (x) (set-box! x (eval-exp val env)))
                               (lambda ()
-                                (apply-env global-env var
+                                (apply-env global-env (cadr var)
                                   (lambda (x) (set-box! x (eval-exp val env)))
                               void)))]
         [cond-exp (conds bodies) (eval-exp (syntax-expand exp) env)]
@@ -193,7 +205,7 @@
     (let exp-recur ((exp exp))
       (cases expression exp
        [let-exp (vars vals body)
-		(app-exp (append (list (lambda-exp vars (map syntax-expand body))) vals))]
+		(app-exp (append (list (lambda-exp vars (parse-refs (find-ref vars) (map syntax-expand body)))) vals))]
        [let*-exp (vars vals body)
 		 (syntax-expand (let-exp (list (car vars)) (list (car vals))
 					 (list (if (not (null? (cddr vals)))
@@ -212,8 +224,16 @@
         (if (null? body) (lit-exp #t)
           (if-exp (car body) (syntax-expand (and-exp (cdr body))) (car body)))]
        [or-exp (body)
-        (if (null? body) (lit-exp #f)
-        (if-exp (car body) (car body) (syntax-expand (or-exp (cdr body)))))]
+       (if (null? body) (lit-exp #f)
+        (if (null? (cdr body))
+          (if-exp (syntax-expand (car body))
+                  (syntax-expand (car body))
+                  (lit-exp '#f))
+          (syntax-expand
+            (let-exp '(car-body) (list (syntax-expand (car body)))
+                                   (list (if-exp '(var-exp car-body)
+                                                 '(var-exp car-body)
+                                                  (syntax-expand (or-exp (cdr body)))))))))]
        [if-exp (id true false)
 	       (if-exp (syntax-expand id)
 		       (syntax-expand true)
