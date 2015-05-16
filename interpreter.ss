@@ -45,7 +45,7 @@
 		            ;identity-proc
 		            unbox
                   (lambda ()
-			              (error 'apply-env "variable ~s is not bound" id)))))]
+			              (eopl:error 'apply-env "variable ~s is not bound" id)))))]
         [app-exp (rands)
 	        (let ([proc-value (eval-exp (car rands) env)]
 		        [args (eval-rands (cdr rands) env)])
@@ -83,6 +83,51 @@
 					      (while-exp ,test ,body))))) env))]
         [else (eopl:error 'eval-exp "Bad abstract syntax: ~a" exp)]))))
 
+(define eval-refs2
+  (lambda (exp args env)
+    (eval-exp (eval-refs exp args) env)))
+
+(define eval-rands-ref2
+  (lambda (exp args env)
+    (eval-rands (eval-rands-ref (cadr exp) args) env)))
+
+(define eval-refs
+  (lambda (lam args env)
+    (cases expression lam
+      [lambda-exp (id body)
+        (let ((res (replace-refs id body args)))
+          (clos-proc (car res) (cadr res) env))]
+      [else eopl:error 'eval-refs "I don't know how you managed that"])))
+
+(define replace-refs
+  (lambda (vars body args)
+    (cond [(null? vars) (list vars body)]
+          [(symbol? (car vars))
+            (let ((res (replace-refs (cdr vars) body (cdr args))))
+              (list (cons (car vars) (car res)) (cadr res)))]
+          [else
+            (let ((res (replace-refs (cdr vars) body (cdr args))))
+              (list (car res) (replace-help (car vars) (cadr res) (car args))))])))
+
+(define replace-help
+  (lambda (var exps arg)
+    (cond [(null? exps) exps]
+          [(expression? exps)
+            (cases expression exps
+              [ref-exp (id) (if (eqv? id (cadr var)) arg exps)]
+              [lit-exp (id) exps]
+              [set-exp (id body) (set-exp (replace-help var id arg) (replace-help var body arg))]
+              [app-exp (rands) (app-exp (replace-help var rands arg))]
+              [lambda-exp (id body) (lambda-exp id (replace-help var body arg))]
+              [else exps])]
+          [(list-of expression?) (cons (replace-help var (car exps) arg) (replace-help var (cdr exps) arg))])))
+
+(define eval-rands-ref
+  (lambda (vars args)
+    (cond [(null? vars) args]
+          [(symbol? (car vars)) (cons (car args) (eval-rands-ref (cdr vars) (cdr args)))]
+          [else (eval-rands-ref (cdr vars) (cdr args))])))
+
 ; evaluate the list of operands, putting results into a list
 
 (define eval-rands
@@ -108,7 +153,7 @@
   (lambda (proc-value args)
     (cases proc-val proc-value
       [prim-proc (op) (apply-prim-proc op args)]
-      [clos-proc (vars body env) (eval-bodies body (extend-env vars args env))]
+      [clos-proc (vars body env) (eval-bodies (cadr (replace-refs vars body args)) (extend-env (car (replace-refs vars body args)) (eval-rands-ref vars args) env))]
       [case-clos-proc (idss lens bodies env) (let ((pos (list-find-position (length args) lens)))
                                                 (eval-bodies (list-ref bodies pos) (extend-env (list-ref idss pos) args env)))]
       [clos-improc (vars body env) (eval-bodies body (extend-improper-env vars args env))]

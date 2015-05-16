@@ -132,6 +132,12 @@
                   (cons (cadar ls) (find-ref (cdr ls)))]
           [else (find-ref (cdr ls))])))
 
+(define find-noref
+  (lambda (ls)
+    (cond [(null? ls) ls]
+          [(symbol? (car ls)) (cons (car ls) (find-noref (cdr ls)))]
+          [else (find-noref (cdr ls))])))
+
 (define unparse-exp
   (lambda (exp)
     (cases expression exp
