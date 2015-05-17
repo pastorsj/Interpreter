@@ -48,8 +48,10 @@
 			              (eopl:error 'apply-env "variable ~s is not bound" id)))))]
         [app-exp (rands)
 	        (let ([proc-value (eval-exp (car rands) env)]
-		        [args (eval-rands (cdr rands) env)])
-		        (apply-proc proc-value args))]
+		        [args (cdr rands)])
+            (cases proc-val proc-value
+              [clos-proc (vars body env2) (apply-proc proc-value args env)]
+              [else (apply-proc proc-value (eval-rands args env) env)]))]
         [let-exp (vars vals body)
 	        (let ([new-env (extend-env vars
 					  (eval-rands vals env)
@@ -150,10 +152,15 @@
 ;  User-defined procedures will be added later.
 
 (define apply-proc
-  (lambda (proc-value args)
+  (lambda (proc-value args env2)
     (cases proc-val proc-value
-      [prim-proc (op) (apply-prim-proc op args)]
-      [clos-proc (vars body env) (eval-bodies (cadr (replace-refs vars body args)) (extend-env (car (replace-refs vars body args)) (eval-rands-ref vars args) env))]
+      [prim-proc (op) (apply-prim-proc op args env2)]
+      [clos-proc (vars body env) (eval-bodies
+                                    (cadr (replace-refs vars body args))
+                                    (extend-env
+                                      (car (replace-refs vars body args))
+                                      (eval-rands-ref vars (if ((list-of expression?) args) (eval-rands args env2) args))
+                                      (if (equal? (cadr (replace-refs vars body args)) body) env env2)))]
       [case-clos-proc (idss lens bodies env) (let ((pos (list-find-position (length args) lens)))
                                                 (eval-bodies (list-ref bodies pos) (extend-env (list-ref idss pos) args env)))]
       [clos-improc (vars body env) (eval-bodies body (extend-improper-env vars args env))]
@@ -176,7 +183,7 @@
 ; built-in procedure individually.  We are "cheating" a little bit.
 
 (define apply-prim-proc
-  (lambda (prim-proc args)
+  (lambda (prim-proc args env2)
     (case prim-proc
       [(+) (apply + args)]
       [(-) (apply - args)]
@@ -237,8 +244,8 @@
       [(cddar) (cdr (cdr (car (1st args))))]
       [(cdaar) (cdr (car (car (1st args))))]
       [(cdadr) (cdr (car (cdr (1st args))))]
-      [(apply) (apply-proc (1st args) (2nd args))]
-      [(map) (map (lambda (x) (apply-proc (1st args) x)) (matrix-transpose-map (cdr args)))]
+      [(apply) (apply-proc (1st args) (2nd args) env2)]
+      [(map) (map (lambda (x) (apply-proc (1st args) x env2)) (matrix-transpose-map (cdr args)))]
       [else (error 'apply-prim-proc
             "Bad primitive procedure name: ~s"
             prim-op)])))
