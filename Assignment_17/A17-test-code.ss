@@ -447,7 +447,7 @@
 ;You can run the tests individually, or run them all
 ;#by loading this file (and your solution) and typing (r)
 
-(define (run-all)
+(define (run-all17)
   (display 'set!-local-variables) 
   (test-set!-local-variables)
   (display 'simple-defines) 
@@ -466,5 +466,5 @@
   (test-ref)
 )
 
-(define r run-all)
+(define r run-all17)
 

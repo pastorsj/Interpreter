@@ -18,17 +18,17 @@
       [(and (list? datum) (eqv? (car datum) 'when))
         (when-exp (parse-exp (cadr datum)) (map parse-exp (cddr datum)))]
       [(and (list? datum) (eqv? (car datum) 'cond))
-        (let ((transp (matrix-transpose-map (cdr datum))))
+        (let ((transp (matrix-transpose2 (cdr datum))))
 	        (cond-exp (map parse-exp (car transp)) (map parse-exp (cadr transp))))]
       [(and (list? datum) (eqv? (car datum) 'case))
-        (let ((transp (matrix-transpose-map (cddr datum))))
+        (let ((transp (matrix-transpose2 (cddr datum))))
 	        (case-exp (parse-exp (cadr datum)) (map parse-exp (car transp)) (map parse-exp (cadr transp))))]
       [(symbol? datum) (var-exp datum)]
       [(literal? datum) (lit-exp datum)]
       [(pair? datum)
         (cond
           [(eqv? (car datum) 'case-lambda)
-            (let ((transp (matrix-transpose (cdr datum))))
+            (let ((transp (list (map car (cdr datum)) (map cdr (cdr datum)))))
               (case-lambda-exp (car transp) (map length (car transp)) (map (lambda (x) (map parse-exp x)) (cadr transp))))]
           [(eqv? (car datum) 'lambda)
             (cond

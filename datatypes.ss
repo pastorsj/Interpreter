@@ -130,3 +130,8 @@
    (env environment?)])
 
 ;For cells, use box datatype
+
+;; continuations
+
+(define-datatype continuation continuation?
+	[init-k])

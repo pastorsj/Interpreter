@@ -11,18 +11,6 @@
   (let ([identity-proc (lambda (x) x)])
     (lambda (exp env)
       (cases expression exp
-        [ref-exp (id) ; look up its value.
-          (apply-env env
-            id
-	          ;identity-proc ; procedure to call if var is in env
-	          unbox
-            (lambda () ; procedure to call if var is not in env
-	            (apply-env global-env  ; was init-env
-		            id
-		            ;identity-proc
-		            unbox
-                  (lambda ()
-			              (error 'apply-env "variable ~s is not bound" id)))))]
         [define-exp (id body) (set! global-env (extend-env (list id) (list (eval-exp body env)) global-env))]
         [set-exp (var val) (apply-env env (cadr var)
                               (lambda (x) (set-box! x (eval-exp val env)))
@@ -245,7 +233,7 @@
       [(cdaar) (cdr (car (car (1st args))))]
       [(cdadr) (cdr (car (cdr (1st args))))]
       [(apply) (apply-proc (1st args) (2nd args) env2)]
-      [(map) (map (lambda (x) (apply-proc (1st args) x env2)) (matrix-transpose-map (cdr args)))]
+      [(map) (map (lambda (x) (apply-proc (1st args) x env2)) (matrix-transpose2 (cdr args)))]
       [else (error 'apply-prim-proc
             "Bad primitive procedure name: ~s"
             prim-op)])))
@@ -343,20 +331,31 @@
 	'()
 	(cons (get-firsts m) (list (get-new-matrix m))))))
 
-  (define matrix-transpose-map
+  (define matrix-transpose-map ;;;deprecated?
     (lambda (m)
       (if (null? (car m))
-  	'()
+  	'()  
   	(cons (get-firsts m) (matrix-transpose-map (get-new-matrix m))))))
 
 (define get-firsts
   (lambda (m)
-    (if (null? m)
-	'()
-	(cons (caar m) (get-firsts (cdr m))))))
+    (map caar m)))
 
 (define get-new-matrix
   (lambda (m)
     (if (null? m)
 	'()
 	(cons (cdr (car m)) (get-new-matrix (cdr m))))))
+
+
+
+(define transpose-recurse
+  (lambda (m1 m2)
+    (if (or (null? m1) (null? (car m1)))
+      m2
+      (transpose-recurse (map cdr m1) (append m2 (list (map car m1)))))))
+
+;;; #5
+(define matrix-transpose2
+  (lambda (m)
+    (transpose-recurse (map cdr m) (list (map car m)))))

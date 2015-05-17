@@ -1,3 +1,4 @@
+
 ;; Test code for CSSE 304 Assignment 16
 
 (define (test-basics)
@@ -264,7 +265,7 @@
 ;You can run the tests individually, or run them all
 ;#by loading this file (and your solution) and typing (r)
 
-(define (run-all)
+(define (run-all16)
   (display 'basics) 
   (test-basics)
   (display 'answers-are-sets) 
@@ -275,5 +276,5 @@
   (test-subst-leftmost)
 )
 
-(define r run-all)
+(define r run-all16)
 

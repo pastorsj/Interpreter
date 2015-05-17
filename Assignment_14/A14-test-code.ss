@@ -280,7 +280,7 @@
 ;You can run the tests individually, or run them all
 ;#by loading this file (and your solution) and typing (r)
 
-(define (run-all)
+(define (run-all14)
   (display 'primitive-procedures) 
   (test-primitive-procedures)
   (display 'lambda-regression-tests) 
@@ -292,5 +292,5 @@
 
 )
 
-(define r run-all)
+(define r run-all14)
 
