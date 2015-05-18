@@ -134,4 +134,25 @@
 ;; continuations
 
 (define-datatype continuation continuation?
-	[init-k])
+	[init-k]
+  [recursive-extend-k
+    (idss (list-of (lambda (x)
+                      (or (improper-list? x) ((list-of symbol?) x)))))
+    (env environment?)
+    (k continuation?)]
+  [set-replace-body-k
+    (var sym-or-ref?)
+    (body expression?)
+    (arg expression?)
+    (k continuation?)]
+  [set-replace-both-k
+    (res expression?)
+    (k continuation?)]
+  [replace-refs-k
+    (vars (list-of sym-or-ref?))
+    (args (list-of scheme-value?))
+    (k continuation?)]
+  [ref-help-k
+    (res (list-of list?))
+    (k continuation?)]
+  )

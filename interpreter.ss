@@ -1,7 +1,7 @@
 ; top-level-eval evaluates a form in the global environment
 
 (define top-level-eval
-  (lambda (form)
+  (lambda (form k)
     ; later we may add things that are not expressions.
     (eval-exp form (empty-env))))
 
@@ -48,7 +48,7 @@
 	[letrec-exp (procnames idss body letrec-body)
 		    (eval-bodies letrec-body
 			      (extend-env-recursively
-			       procnames idss body env))]
+			       procnames idss body env (init-k)))]
         [member-exp (item list)
           (member (eval-exp item env) (map (lambda (x) (eval-exp x env)) list))]
         [if-exp (id true false)
@@ -73,50 +73,48 @@
 					      (while-exp ,test ,body))))) env))]
         [else (eopl:error 'eval-exp "Bad abstract syntax: ~a" exp)]))))
 
-(define eval-refs2
-  (lambda (exp args env)
-    (eval-exp (eval-refs exp args) env)))
-
-(define eval-rands-ref2
-  (lambda (exp args env)
-    (eval-rands (eval-rands-ref (cadr exp) args) env)))
-
-(define eval-refs
-  (lambda (lam args env)
-    (cases expression lam
-      [lambda-exp (id body)
-        (let ((res (replace-refs id body args)))
-          (clos-proc (car res) (cadr res) env))]
-      [else eopl:error 'eval-refs "I don't know how you managed that"])))
-
 (define replace-refs
   (lambda (vars body args)
-    (cond [(null? vars) (list vars body)]
-          [(symbol? (car vars))
+    (let ((res (replace-refs-cps vars body args (init-k)))
+          (res2
+        (if (null? vars)
+            (list vars body)
             (let ((res (replace-refs (cdr vars) body (cdr args))))
-              (list (cons (car vars) (car res)) (cadr res)))]
-          [else
-            (let ((res (replace-refs (cdr vars) body (cdr args))))
-              (list (car res) (replace-help (car vars) (cadr res) (car args))))])))
+              (if (symbol? (car vars))
+                  (list (cons (car vars) (car res)) (cadr res))
+                  (list (car res) (replace-help (car vars) (cadr res) (car args) (init-k))))))))
+      res)))
+    ;(if (null? vars)
+    ;    (list vars body)
+    ;    (let ((res (replace-refs (cdr vars) body (cdr args))))
+    ;      (if (symbol? (car vars))
+    ;          (list (cons (car vars) (car res)) (cadr res)))]
+    ;          (list (car res) (replace-help (car vars) (cadr res) (car args) (init-k))))])))
 
-(define replace-help
-  (lambda (var exps arg)
-    (cond [(null? exps) exps]
+(define replace-refs-cps
+  (lambda (vars body args k)
+    (if (null? vars)
+        (apply-k k (list vars body))
+        (replace-refs-cps (cdr vars) body (cdr args) (replace-refs-k vars args k)))))
+
+(define replace-help ;;Done in cps
+  (lambda (var exps arg k)
+    (cond [(null? exps) (apply-k k exps)]
           [(expression? exps)
             (cases expression exps
-              [ref-exp (id) (if (eqv? id (cadr var)) arg exps)]
-              [lit-exp (id) exps]
-              [set-exp (id body) (set-exp (replace-help var id arg) (replace-help var body arg))]
-              [app-exp (rands) (app-exp (replace-help var rands arg))]
-              [lambda-exp (id body) (lambda-exp id (replace-help var body arg))]
-              [else exps])]
-          [(list-of expression?) (cons (replace-help var (car exps) arg) (replace-help var (cdr exps) arg))])))
+              [ref-exp (id) (apply-k k (if (eqv? id (cadr var)) arg exps))]
+              [lit-exp (id) (apply-k k exps)]
+              [set-exp (id body) (replace-help var id arg (set-replace-body-k var body arg k))]
+              [app-exp (rands) (app-exp (replace-help var rands arg k))]
+              [lambda-exp (id body) (lambda-exp id (replace-help var body arg k))]
+              [else (apply-k k exps)])]
+          [(list-of expression?) (cons (replace-help var (car exps) arg k) (replace-help var (cdr exps) arg k))])))
 
-(define eval-rands-ref
-  (lambda (vars args)
-    (cond [(null? vars) args]
-          [(symbol? (car vars)) (cons (car args) (eval-rands-ref (cdr vars) (cdr args)))]
-          [else (eval-rands-ref (cdr vars) (cdr args))])))
+(define eval-rands-ref ;;Done in cps
+  (lambda (vars args k)
+    (cond [(null? vars) (apply-k k args)]
+          [(symbol? (car vars)) (cons (car args) (eval-rands-ref (cdr vars) (cdr args) k))]
+          [else (eval-rands-ref (cdr vars) (cdr args) k)])))
 
 ; evaluate the list of operands, putting results into a list
 
@@ -147,7 +145,7 @@
                                     (cadr (replace-refs vars body args))
                                     (extend-env
                                       (car (replace-refs vars body args))
-                                      (eval-rands-ref vars (if ((list-of expression?) args) (eval-rands args env2) args))
+                                      (eval-rands-ref vars (if ((list-of expression?) args) (eval-rands args env2) args) (init-k))
                                       (if (equal? (cadr (replace-refs vars body args)) body) env env2)))]
       [case-clos-proc (idss lens bodies env) (let ((pos (list-find-position (length args) lens)))
                                                 (eval-bodies (list-ref bodies pos) (extend-env (list-ref idss pos) args env)))]
@@ -233,7 +231,7 @@
       [(cdaar) (cdr (car (car (1st args))))]
       [(cdadr) (cdr (car (cdr (1st args))))]
       [(apply) (apply-proc (1st args) (2nd args) env2)]
-      [(map) (map (lambda (x) (apply-proc (1st args) x env2)) (matrix-transpose2 (cdr args)))]
+      [(map) (map (lambda (x) (apply-proc (1st args) x env2)) (matrix-transpose2 (cdr args) (init-k)))]
       [else (error 'apply-prim-proc
             "Bad primitive procedure name: ~s"
             prim-op)])))
@@ -299,63 +297,38 @@
       (eopl:pretty-print answer) (newline)
       (rep))))  ; tail-recursive, so stack doesn't grow.
 
-(define eval-one-exp
-  (lambda (x) (top-level-eval (syntax-expand (parse-exp x)))))
+(define eval-one-exp ;;Done in cps
+  (lambda (x) (top-level-eval (syntax-expand (parse-exp x)) (init-k))))
+(define global-env (init-env)) ;;Done in cps
 
-(define global-env (init-env))
-
-(define reset-global-env
+(define reset-global-env ;;Done in cps
   (lambda ()
     (set! global-env (init-env))))
 
-(define extend-env-recursively
-  (lambda (proc-names idss bodies old-env)
-    (let ((res (clean-vars proc-names bodies '(() ()))))
-      (recursively-extended-env-record
-        (car res) idss (cadr res) old-env))))
+(define extend-env-recursively ;;Done in cps
+  (lambda (proc-names idss bodies old-env k)
+    (clean-vars proc-names bodies '(() ()) (recursive-extend-k idss old-env k))))
 
-(define clean-vars
-  (lambda (idss bodies ls)
-    (cond [(null? idss) (cons (reverse (car ls)) (list (reverse (cadr ls))))]
-          [(equal? (parse-exp (car idss)) (car bodies)) (clean-vars (cdr idss) (cdr bodies) ls)]
-          [else (clean-vars (cdr idss) (cdr bodies) (list (cons (car idss) (car ls)) (cons (car bodies) (cadr ls))))])))
+
+(define clean-vars ;;Done in cps
+  (lambda (idss bodies ls k)
+    (cond [(null? idss) (apply-k k (cons (reverse (car ls)) (list (reverse (cadr ls)))))]
+          [(equal? (var-exp (car idss)) (car bodies)) (clean-vars (cdr idss) (cdr bodies) ls k)]
+          [else (clean-vars (cdr idss) (cdr bodies) (list (cons (car idss) (car ls)) (cons (car bodies) (cadr ls))) k)])))
 
 (define 1st car)
 (define 2nd cadr)
 (define 3rd caddr)
 
 ;Extra helper procedures for our interpreter...
-(define matrix-transpose
-  (lambda (m)
-    (if (null? (car m))
-	'()
-	(cons (get-firsts m) (list (get-new-matrix m))))))
 
-  (define matrix-transpose-map ;;;deprecated?
-    (lambda (m)
-      (if (null? (car m))
-  	'()  
-  	(cons (get-firsts m) (matrix-transpose-map (get-new-matrix m))))))
-
-(define get-firsts
-  (lambda (m)
-    (map caar m)))
-
-(define get-new-matrix
-  (lambda (m)
-    (if (null? m)
-	'()
-	(cons (cdr (car m)) (get-new-matrix (cdr m))))))
-
-
-
-(define transpose-recurse
-  (lambda (m1 m2)
+(define transpose-recurse ;;Done in cps
+  (lambda (m1 m2 k)
     (if (or (null? m1) (null? (car m1)))
-      m2
-      (transpose-recurse (map cdr m1) (append m2 (list (map car m1)))))))
+      (apply-k k m2)
+      (transpose-recurse (map cdr m1) (append m2 (list (map car m1))) k))))
 
 ;;; #5
-(define matrix-transpose2
-  (lambda (m)
-    (transpose-recurse (map cdr m) (list (map car m)))))
+(define matrix-transpose2 ;;Done in cps
+  (lambda (m k)
+    (transpose-recurse (map cdr m) (list (map car m)) k)))

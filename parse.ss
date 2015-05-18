@@ -18,10 +18,10 @@
       [(and (list? datum) (eqv? (car datum) 'when))
         (when-exp (parse-exp (cadr datum)) (map parse-exp (cddr datum)))]
       [(and (list? datum) (eqv? (car datum) 'cond))
-        (let ((transp (matrix-transpose2 (cdr datum))))
+        (let ((transp (matrix-transpose2 (cdr datum) (init-k))))
 	        (cond-exp (map parse-exp (car transp)) (map parse-exp (cadr transp))))]
       [(and (list? datum) (eqv? (car datum) 'case))
-        (let ((transp (matrix-transpose2 (cddr datum))))
+        (let ((transp (matrix-transpose2 (cddr datum) (init-k))))
 	        (case-exp (parse-exp (cadr datum)) (map parse-exp (car transp)) (map parse-exp (cadr transp))))]
       [(symbol? datum) (var-exp datum)]
       [(literal? datum) (lit-exp datum)]

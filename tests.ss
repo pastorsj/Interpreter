@@ -5,10 +5,12 @@
 		(load "Assignment_14/A14-test-code.ss")
 		(load "Assignment_16/A16-test-code.ss")
 		(load "Assignment_17/A17-test-code.ss")
+		(load "Assignment_18/A18-test-code.ss")
 		(run-all13)
 		(run-all14)
 		(run-all16)
-		(run-all17))))
+		(run-all17)
+		(run-all18))))
 
 (define lt load-all-tests)
 
@@ -20,4 +22,5 @@
 			(run-all13)
 			(run-all14)
 			(run-all16)
-			(run-all17))))
+			(run-all17)
+			(run-all18))))
