@@ -137,9 +137,28 @@
 	[init-k]
   [recursive-extend-k
     (idss (list-of (lambda (x)
-                      (or (improper-list? x) ((list-of symbol?) x)))))
+        (or (improper-list? x) ((list-of symbol?) x)))))
     (env environment?)
     (k continuation?)]
+  [map-k
+  	(args (list-of scheme-value?))
+  	(env environment?)
+  	(k continuation?)]
+  [app-k
+  	(rands (list-of expression?))
+  	(env environment?)
+  	(k continuation?)]
+  [app-rands-k
+  	(proc proc-val?)
+  	(env environment?)
+  	(k continuation?)]
+  [member-k
+  	(ls list?)
+  	(env environment?)
+  	(k continuation?)]
+  [member-help-k
+  	(item scheme-value?)
+  	(k continuation?)]
   [set-replace-body-k
     (var sym-or-ref?)
     (body expression?)
@@ -155,4 +174,21 @@
   [ref-help-k
     (res (list-of list?))
     (k continuation?)]
+  [replace-help-k
+  	(var sym-or-ref?)
+  	(exp expression?)
+  	(arg expression?)
+  	(k continuation?)]
+  [replace-please-stop-k
+  	(res (list-of expression?))
+  	(k continuation?)]
+  [lambda-ref-k
+  	(id (list-of symbol?))
+  	(k continuation?)]
+  [app-ref-k
+  	(k continuation?)]
+  [if-k
+  	(env environment?)
+  	(conds (list-of expression?))
+  	(k continuation?)]
   )
