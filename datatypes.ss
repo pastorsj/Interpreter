@@ -191,4 +191,26 @@
   	(env environment?)
   	(conds (list-of expression?))
   	(k continuation?)]
+  [extend-help-define-k
+    (id symbol?)
+    (env environment?)
+    (k continuation?)]
+  [set-define-k
+    (env environment?)
+    (k continuation?)]
+  [apply-extended-k
+    (sym symbol?)
+    (vals (list-of scheme-value?))
+    (succeed procedure?)
+    (fail procedure?)
+    (env environment?)
+    (k continuation?)]
+  [rec-env-k
+    (bodies (list expression))
+    (env environment?)
+    (old-env environment?)
+    (sym symbol?)
+    (succeed procedure?)
+    (fail procedure?)
+    (k continuation?)]
   )

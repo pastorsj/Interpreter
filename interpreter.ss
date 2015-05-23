@@ -1,6 +1,6 @@
 ; top-level-eval evaluates a form in the global environment
 
-(define top-level-eval
+(define top-level-eval ;;Done in cps
   (lambda (form k)
     ; later we may add things that are not expressions.
     (eval-exp form (empty-env) k)))
@@ -11,7 +11,8 @@
   (let ([identity-proc (lambda (x) x)])
     (lambda (exp env k)
       (cases expression exp
-        [define-exp (id body) (set! global-env (extend-env (list id) (list (eval-exp body env (init-k))) global-env))]
+        [define-exp (id body) (eval-exp body env (extend-help-define-k id global-env k))]
+        ;[define-exp (id body) (set! global-env (extend-env (list id) (list (eval-exp body env (init-k))) global-env))]
         [set-exp (var val) (apply-env env (cadr var)
                               (lambda (x) (set-box! x (eval-exp val env k)))
                               (lambda ()
@@ -25,13 +26,16 @@
         [var-exp (id) ; look up its value.
           (apply-env env
             id
-	          unbox
-            (lambda () ; procedure to call if var is not in env
+	          (lambda (v k)
+              (apply-k k (unbox v)))
+            (lambda (k1) ; procedure to call if var is not in env
 	            (apply-env global-env  ; was init-env
 		            id
-		            unbox
-                  (lambda ()
-			              (eopl:error 'apply-env "variable ~s is not bound" id)))))]
+                (lambda (v k)
+                  (apply-k k (unbox v)))
+                  (lambda (k1)
+			              (eopl:error 'apply-env "variable ~s is not bound" id))
+                    k)) k)]
         [app-exp (rands)
           (eval-exp (car rands) env (app-k (cdr rands) env k))]
 	    ;    (let ([proc-value (eval-exp (car rands) env k)]
@@ -69,7 +73,7 @@
 					      (while-exp ,test ,body))))) env k))]
         [else (eopl:error 'eval-exp "Bad abstract syntax: ~a" exp)]))))
 
-(define replace-refs
+(define replace-refs ;; Done in cps
   (lambda (vars body args)
   (replace-refs-cps vars body args (init-k))))
 
@@ -117,7 +121,7 @@
 
 ;  Apply a procedure to its arguments.
 
-(define apply-prim-proc
+(define apply-proc
   (lambda (proc-value args env2 k)
     (cases proc-val proc-value
       [prim-proc (op) (apply-prim-proc op args env2 k)]

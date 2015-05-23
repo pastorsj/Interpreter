@@ -16,8 +16,8 @@
 	  (loop (- i 1) (cdr vals) (append ls (list (car vals))))))))
 
 (define list-find-position
-  (lambda (sym los)
-    (list-index (lambda (xsym) (eqv? sym xsym)) los)))
+  (lambda (sym los k)
+    (apply-k k (list-index (lambda (xsym) (eqv? sym xsym)) los))))
 
 (define list-index
   (lambda (pred ls)
@@ -29,7 +29,7 @@
 		 (+ 1 list-index-r)
 		 #f))))))
 
-(define apply-env
+(define apply-env-old
   (lambda (env sym succeed fail) ; succeed and fail are procedures applied if the var is or isn't found, respectively.
     (cases environment env
       (empty-env-record ()
@@ -46,3 +46,21 @@
 	 (if (number? pos)
 			(eval-exp (list-ref bodies pos) env)
 	    (apply-env old-env sym succeed fail)))))))
+
+(define apply-env
+  (lambda (env sym succeed fail k) ; succeed and fail are procedures applied if the var is or isn't found, respectively.
+    (cases environment env
+      (empty-env-record () (fail k))
+      (extended-env-record (syms vals env)
+        (list-find-position sym syms (apply-extended-k sym vals succeed fail env k)))
+	       ;(let ((pos (list-find-position sym syms)))
+      	  ; (if (number? pos)
+	         ;  (succeed (list-ref vals pos))
+	          ; (apply-env env sym succeed fail)))
+      (recursively-extended-env-record (procnames idss bodies old-env)
+        (list-find-position sym procnames (rec-env-k bodies env old-env sym succeed fail k))))))
+       ;(let ([pos
+	      ;(list-find-position sym procnames)])
+	       ; (if (number? pos)
+			    ;  (eval-exp (list-ref bodies pos) env)
+	         ; (apply-env old-env sym succeed fail)))))))

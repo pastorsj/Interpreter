@@ -3,7 +3,7 @@
     (cases continuation k
       [init-k () v]
       [if-k (env conds k)
-      	(if v 
+      	(if v
       		(eval-exp (car conds) env k)
       		(if (null? (cdr conds))
       			void
@@ -11,9 +11,9 @@
       [app-k (rands env k)
       	(eval-rands rands env (app-rands-k v env k))]
       [app-rands-k (proc env k)
-      	(cases proc proc-value
-              [clos-proc (vars body env2) (apply-proc proc-value args env k)]
-              [else (apply-proc proc-value (eval-rands args env (init-k)) env k)])]
+      	(cases proc-val proc
+              [clos-proc (vars body env2) (apply-proc proc v env k)]
+              [else (apply-proc proc v env k)])]
       [recursive-extend-k (idss env k)
         (apply-k k (recursively-extended-env-record (car v) idss (cadr v) env))]
       [map-k (args env k)
@@ -40,6 +40,18 @@
       	(replace-help var exp arg (replace-please-stop-k v k))]
       [replace-please-stop-k (res k)
       	(apply-k k (cons v res))]
+      [extend-help-define-k (id env k)
+        (extend-env (list id) (list v) env (set-define-k env k))]
+      [set-define-k (env k)
+        (apply-k k (set! env v))]
+      [apply-extended-k (sym vals succeed fail env k)
+        (if (number? v)
+          (succeed (list-ref vals v) k)
+          (apply-env env sym succeed fail k))]
+      [rec-env-k (bodies env old-env sym succeed fail k)
+        (if (number? v)
+          (eval-exp (list-ref bodies v) env k)
+          (apply-env old-env sym succeed fail k))]
       [else v])))
 
 (define map-cps
