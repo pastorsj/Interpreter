@@ -142,12 +142,27 @@
 		(rem (list-of scheme-value?))
 		(env environment?)
 		(k continuation?)]
+	[clos-extend-k
+		(vars (list-of symbol?))
+		(env environment?)
+		(body (list-of expression?))
+		(k continuation?)]
+	[list-index-k
+		(k continuation?)]
 	[clos-ref-k
 		(vars (list-of sym-or-ref?))
 		(args (list-of expression?))
 		(env environment?)
 		(env2 environment?)
 		(body (list-of expression?))
+		(k continuation?)]
+	[map-help-k
+		(proc proc-val?) 
+		(arg scheme-value?)
+		(env environment?)
+		(k continuation?)]
+	[map-help2-k
+		(res scheme-value?)
 		(k continuation?)]
 	[ref2-k
 		(res (list-of list?))

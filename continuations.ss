@@ -2,6 +2,7 @@
   (lambda (k v)
     (cases continuation k
       [init-k () v]
+      [list-index-k (k) (apply-k k (if (number? v) (+ 1 v) #f))]
       [letrec-k (lbody k)
       	(eval-bodies lbody v k)]
       [eval-rands-k (done rem env k)
@@ -11,6 +12,8 @@
       	(eval-bodies bodies env k)]
       [bodies-env-k (bodies k)
       	(eval-bodies bodies v k)]
+      [clos-extend-k (vars env body k)
+      	(extend-env vars v env (bodies-env-k body k))]
       [if-k (env conds k)
       	(if v
       		(eval-exp (car conds) env k)
@@ -28,7 +31,7 @@
       [recursive-extend-k (idss env k)
         (apply-k k (recursively-extended-env-record (car v) idss (cadr v) env))]
       [map-k (args env k)
-      	(map (lambda (x) (apply-proc (1st args) x env k)) v)]
+      	(map-help (1st args) v env k)]
       [member-k (ls env k)
       	(map-cps (lambda (x) (eval-exp x env (init-k))) ls (member-help-k v k))]
       [member-help-k (item k)
@@ -79,6 +82,10 @@
       	(eval-rands-ref vars v (ref3-k res body env env2 k))]
       [ref3-k (res body env env2 k)
       	(extend-env (car res) v (if (equal? (cadr res) body) env env2) (bodies-env-k (cadr res) k))]
+      [map-help-k (proc arg env k)
+      	(map-help proc arg env (map-help2-k v k))]
+      [map-help2-k (res k)
+      	(apply-k k (cons res v))]
 
 
 
@@ -87,3 +94,8 @@
 (define map-cps
 	(lambda (x ls k)
 		(apply-k k (map x ls))))
+
+(define map-help
+	(lambda (proc ls env k)
+		(if (null? ls) (apply-k k ls)
+		(apply-proc proc (car ls) env (map-help-k proc (cdr ls) env k)))))

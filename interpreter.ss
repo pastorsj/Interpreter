@@ -12,7 +12,6 @@
     (lambda (exp env k)
       (cases expression exp
         [define-exp (id body) (eval-exp body env (extend-help-define-k id global-env k))]
-        ;[define-exp (id body) (set! global-env (extend-env (list id) (list (eval-exp body env (init-k))) global-env))]
         [set-exp (var val) (apply-env env (cadr var)
                               (lambda (x k) (eval-exp val env (set-k x k)))
                               (lambda (k1)
@@ -38,16 +37,6 @@
                     k)) k)]
         [app-exp (rands)
           (eval-exp (car rands) env (app-k (cdr rands) env k))]
-	    ;    (let ([proc-value (eval-exp (car rands) env k)]
-		   ;     [args (cdr rands)])
-        ;    (cases proc-val proc-value
-         ;     [clos-proc (vars body env2) (apply-proc proc-value args env k)]
-          ;    [else (apply-proc proc-value (eval-rands args env (init-k)) env k)]))]
-;        [let-exp (vars vals body)
-;	        (let ([new-env (extend-env vars
-;					  (eval-rands vals env (init-k))
-;					  env (init-k))])
-;		        (eval-bodies body new-env))]
 	[letrec-exp (procnames idss body letrec-body)
 			      (extend-env-recursively
 			       procnames idss body env (letrec-k letrec-body k))]
@@ -69,10 +58,6 @@
       (eval-exp test env (while-if-k body test env k))]
         [else (eopl:error 'eval-exp "Bad abstract syntax: ~a" exp)]))))
 
-;(define replace-refs ;; Deprecated
- ; (lambda (vars body args)
-  ;(replace-refs-cps vars body args (init-k))))
-
 (define replace-refs-cps ;;;Done in cps
   (lambda (vars body args k)
     (if (null? vars)
@@ -90,7 +75,7 @@
               [app-exp (rands) (replace-help var rands arg (app-ref-k k))]
               [lambda-exp (id body) (replace-help var body arg (lambda-ref-k id k))]
               [else (apply-k k exps)])]
-          [((list-of expression?) exps) (replace-help var (cdr exps) arg (replace-help-k var (car exps) arg k))])));(cons (replace-help var (car exps) arg k) (replace-help var (cdr exps) arg k))])))
+          [((list-of expression?) exps) (replace-help var (cdr exps) arg (replace-help-k var (car exps) arg k))])))
 
 (define eval-rands-ref ;;Done in cps
   (lambda (vars args k)
@@ -122,26 +107,10 @@
       [prim-proc (op) (apply-prim-proc op args env2 k)]
       [clos-proc (vars body env)
         (if (ormap list? vars)
-
           (replace-refs-cps vars body args (clos-ref-k vars args env env2 body k))
-
-;          (let ((replaced (replace-refs-cps vars body args (init-k))))
- ;         (eval-bodies
-  ;          (extend-env
-   ;           (car replaced)
-    ;          (eval-rands-ref
-     ;           vars
-      ;          (if ((list-of expression?) args)
-       ;           (eval-rands args env2 (init-k))
-        ;          args)
-         ;       k)
-          ;    (if (equal? (cadr replaced) body)
-           ;     env
-            ;    env2)
-             ; (bodies-env-k (cadr replaced) (init-k))) k))
-
-
-          (extend-env vars (if ((list-of expression?) args) (eval-rands args env2 (init-k)) args) env (bodies-env-k body k)))]
+          (if ((list-of expression?) args)
+            (eval-rands args env2 (clos-extend-k vars env body k))
+            (extend-env vars args env (bodies-env-k body k))))]
       [case-clos-proc (idss lens bodies env) (let ((pos (list-find-position (length args) lens)))
                                                 (eval-bodies (list-ref bodies pos) (extend-env (list-ref idss pos) args env) k))]
       [clos-improc (vars body env) (extend-improper-env vars args env (bodies-env-k body k))]
@@ -233,7 +202,6 @@
       [(map) (matrix-transpose2 (cdr args) (map-k args env2 k))]
       [(call/cc) (apply-proc (1st args) (list (continuation-proc k)) env2 k)]
       [(exit-list) (apply-proc (continuation-proc (init-k)) (list args) env2 k)]
-      ;[(call/cc) (apply-proc (1st args) (list (lambda (x) (apply-k k x))) env2 (init-k))]
       [else (error 'apply-prim-proc
             "Bad primitive procedure name: ~s"
             prim-op)])))
@@ -263,9 +231,6 @@
        [and-exp (body)
         (if (null? body) (lit-exp #t)
           (if-exp (car body) (syntax-expand (and-exp (cdr body))) (car body)))]
-      ; [or-exp (body)
-      ;  (if (null? body) (lit-exp #f)
-       ;     (if-exp (car body) (car body) (syntax-expand (or-exp (cdr body)))))]
        [or-exp (body)
        (if (null? body) (lit-exp #f)
         (if (null? (cdr body))
