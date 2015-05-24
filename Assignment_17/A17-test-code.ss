@@ -233,7 +233,7 @@
 	   (if (> count 0) 
 	       (begin (set! ls (cons r ls)) 
 		      (set! r (+ r count)) 
-		      (set! count (- count 1)) (loop)) )) 
+		      (set! count (- count 1)) (loop)))) 
 	 (list r ls count)))
       (eval-one-exp ' 
        (begin 

@@ -5,14 +5,20 @@
     (empty-env-record)))
 
 (define extend-env
-  (lambda (syms vals env)
-    (extended-env-record syms (map box vals) env)))
+  (lambda (syms vals env k)
+    (if (list? vals)
+    (apply-k k (extended-env-record syms (map box vals) env))
+    (extend-error-catch syms vals env k))))
+
+(define extend-error-catch
+  (lambda (syms vals env k)
+    (apply-k (init-k) vals)))
 
 (define extend-improper-env
-  (lambda (syms vals env)
+  (lambda (syms vals env k)
     (let loop ((i (length syms)) (vals vals) (ls '()))
       (if (= i 1)
-	  (extend-env syms (append ls (list vals)) env)
+	  (extend-env syms (append ls (list vals)) env k)
 	  (loop (- i 1) (cdr vals) (append ls (list (car vals))))))))
 
 (define list-find-position

@@ -106,7 +106,9 @@
    (env environment?)]
   [member-proc
    (item expression?)
-   (ls expression?)])
+   (ls expression?)]
+  [continuation-proc
+   (k continuation?)])
 
 
 
@@ -135,6 +137,44 @@
 
 (define-datatype continuation continuation?
 	[init-k]
+	[eval-rands-k
+		(done list?)
+		(rem (list-of scheme-value?))
+		(env environment?)
+		(k continuation?)]
+	[clos-ref-k
+		(vars (list-of sym-or-ref?))
+		(args (list-of expression?))
+		(env environment?)
+		(env2 environment?)
+		(body (list-of expression?))
+		(k continuation?)]
+	[ref2-k
+		(res (list-of list?))
+		(vars (list-of sym-or-ref?))
+		(body (list-of expression?))
+		(env environment?)
+		(env2 environment?)
+		(k continuation?)]
+	[ref3-k
+		(res (list-of list?))
+		(body (list-of expression?))
+		(env environment?)
+		(env2 environment?)
+		(k continuation?)]
+	[letrec-k
+		(lbody (list-of expression?))
+		(k continuation?)]
+	[bodies-k
+		(bodies (list-of expression?))
+		(env environment?)
+		(k continuation?)]
+	[bodies-env-k
+		(bodies (list-of expression?))
+		(k continuation?)]
+	[rands-ref-k
+		(arg scheme-value?)
+		(k continuation?)]
   [recursive-extend-k
     (idss (list-of (lambda (x)
         (or (improper-list? x) ((list-of symbol?) x)))))
@@ -195,6 +235,9 @@
     (id symbol?)
     (env environment?)
     (k continuation?)]
+  [set-k
+  	(x box?)
+  	(k continuation?)]
   [set-define-k
     (env environment?)
     (k continuation?)]
@@ -205,8 +248,19 @@
     (fail procedure?)
     (env environment?)
     (k continuation?)]
+  [while-if-k
+  	;(res scheme-value?)
+  	(body (list-of expression?))
+  	(test expression?)
+  	(env environment?)
+  	(k continuation?)]
+  [while-k
+  	(body (list-of expression?))
+  	(test expression?)
+  	(env environment?)
+  	(k continuation?)]
   [rec-env-k
-    (bodies (list expression))
+    (bodies (list-of expression?))
     (env environment?)
     (old-env environment?)
     (sym symbol?)
