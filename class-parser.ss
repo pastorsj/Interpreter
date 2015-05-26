@@ -24,25 +24,19 @@
 	[public-method
 		(name symbol?)
 		(args (list-of (lambda (x) (or (null? x) (and (procedure? (car x)) (symbol? (cadr x)) (scheme-value? (caddr x)))))))
-		(body (list-of expression?))]
+		(body expression?)]
 	[private-method
 		(name symbol?)
 		(args (list-of (lambda (x) (or (null? x) (and (procedure? (car x)) (symbol? (cadr x)) (scheme-value? (caddr x)))))))
-		(body (list-of expression?))]
+		(body expression?)]
 	[public-static-method
 		(name symbol?)
 		(args (list-of (lambda (x) (or (null? x) (and (procedure? (car x)) (symbol? (cadr x)) (scheme-value? (caddr x)))))))
-		(body (list-of expression?))]
+		(body expression?)]
 	[private-static-method
 		(name symbol?)
 		(args (list-of (lambda (x) (or (null? x) (and (procedure? (car x)) (symbol? (cadr x)) (scheme-value? (caddr x)))))))
-		(body (list-of expression?))]
-	[public-constr-method
-		(args (list-of (lambda (x) (or (null? x) (and (procedure? (car x)) (symbol? (cadr x)) (scheme-value? (caddr x)))))))
-		(body (list-of expression?))]
-	[private-constr-method
-		(args (list-of (lambda (x) (or (null? x) (and (procedure? (car x)) (symbol? (cadr x)) (scheme-value? (caddr x)))))))
-		(body (list-of expression?))])
+		(body expression?)])
 
 (define typify
 	(lambda (ls)
@@ -68,24 +62,18 @@
 					(let ((args (cadddr method)) (name (caddr method)))
 						(public-static-method name (add-defaults args) (se (parse-exp (list 'begin (car (cddddr method)))))))
 					(let ((args (caddr method)) (name (cadr method)))
-						(if (eqv? classname name)
-							(public-constr-method (add-defaults args) (se (parse-exp `(let ((temp (init classname))) ,(replace-this (cadddr method)) temp))))
-							(public-method name (add-defaults args) (se (parse-exp (list 'begin (cadddr method))))))))]
+							(public-method name (add-defaults args) (se (parse-exp (list 'begin (cadddr method)))))))]
 			[(private)
 				(if (equal? (cadr ls) 'static)
 					(let ((args (cadddr method)) (name (caddr method)))
 						(private-static-method name (add-defaults args) (se (parse-exp (list 'begin (car (cddddr method)))))))
 					(let ((args (caddr method)) (name (cadr method)))
-						(if (eqv? classname name)
-							(private-constr-method (add-defaults args) (se (parse-exp `(let ((temp (init classname))) ,(replace-this (cadddr method)) temp))))
-							(private-method name (add-defaults args) (se (parse-exp (list 'begin (cadddr method))))))))]
+							(private-method name (add-defaults args) (se (parse-exp (list 'begin (cadddr method)))))))]
 			[(static)
 					(let ((args (caddr method)))
 						(public-static-method (add-defaults args) (se (parse-exp (list 'begin (cadddr method))))))]
 			[else (let ((args (cadr method)))
-						(if (eqv? classname name)
-							(public-constr-method (add-defaults args) (se (parse-exp `(let ((temp (init classname))) ,(replace-this (caddr method)) temp))))
-							(public-method name (add-defaults args) (se (parse-exp (list 'begin (caddr method)))))))])))
+							(public-method name (add-defaults args) (se (parse-exp (list 'begin (caddr method))))))])))
 
 (define replace-this
 	(lambda (code)
@@ -98,4 +86,5 @@
 
 (define add-defaults
 	(lambda (args)
-		(map (lambda (x) (if (null? (caddr x)) (list (car x) (cadr x) (void)) (if ((car x) (caddr x)) x (eopl:error 'methods "bad default value")))) args)))
+		(if (null? (car args)) args
+			(map (lambda (x) (if (null? (caddr x)) (list (car x) (cadr x) (void)) (if ((car x) (caddr x)) x (eopl:error 'methods "bad default value")))) args))))

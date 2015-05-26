@@ -269,6 +269,55 @@
           [private-static-method (name args body) (cons (car ls) (filter-static-methods (cdr ls)))]
           [else (filter-static-methods (cdr ls))])])))
 
+(define filter-normal-fields
+  (lambda (ls)
+    (cond
+      [(null? ls) ls]
+      [else (cases classvar (car ls)
+          [public-var (pred name val) (cons (car ls) (filter-normal-fields (cdr ls)))]
+          [private-var (pred name val) (cons (car ls) (filter-normal-fields (cdr ls)))]
+          [else (filter-normal-fields (cdr ls))])])))
+
+(define filter-normal-methods
+  (lambda (ls)
+    (cond
+      [(null? ls) ls]
+      [else (cases method (car ls)
+          [public-method (name args body) (cons (car ls) (filter-normal-methods (cdr ls)))]
+          [private-method (name args body) (cons (car ls) (filter-normal-methods (cdr ls)))]
+          [else (filter-normal-methods (cdr ls))])])))
+
+(define filter-public-fields
+  (lambda (ls)
+    (cond
+      [(null? ls) ls]
+      [else (cases classvar (car ls)
+          [public-var (pred name val) (cons (car ls) (filter-public-fields (cdr ls)))]
+          [private-var (pred name val) (cons (car ls) (filter-public-fields (cdr ls)))]
+          [else (filter-public-fields (cdr ls))])])))
+
+(define make-constr
+  (lambda (fields methods)
+    (let ((fields (filter-normal-fields fields)) (methods (filter-normal-methods methods)))
+      (lambda (args)
+        (letrec-exp (list 'this) (cons 'this fields)) (map parse-exp (cons (make-constr-help fields methods) (arg-default fields args))) (var-exp 'this)))))
+
+(define make-constr-help
+  (lambda (fields methods)
+    (let ((res (filter-public-fields fields)))
+      (lambda-exp-improperls (list 'msg) (list 'args)
+        (list (se (case-exp
+          (var-exp 'msg)
+          (map parse-exp (append (map cadr (filter-static-methods methods)) (map caddr res)))
+          (map parse-exp (append (map caddr (filter-static-methods methods)) (map caddr res))))))))))
+
+(define arg-default
+  (lambda (fields args)
+    (cond
+      [(null? fields) '()]
+      [(null? args) (cons (cadddr (car fields)) (arg-default (cdr fields) (cdr args)))]
+      [else (cons (car args) (arg-default (cdr fields) (cdr args)))])))
+
 ;syntax-expand procedure
 
 (define syntax-expand
@@ -279,18 +328,42 @@
 		(app-exp (append (list (lambda-exp vars (parse-refs (find-ref vars) (map syntax-expand body)))) vals))]
        [define-exp (var val) (define-exp var (se val))]
 
+;(define vector-list
+;  (let ((a 5) (b 3)
+;    (make-vlist (lambda (v)
+;      (letrec ((v2 (vec-copy (car v) (make-vector (vector-length (car v))))) (size (vector-length (car v))) (capacity (vector-length (car v)))
+;        (this (lambda (msg . args)
+;          (case msg ; Scheme's case is a similar to switch in some other languages.
+;            [(empty?) (eqv? (vector) v2)]
+;            [(get) (vector-ref v2 (car args))]
+;            [(set) (vector-set! v2 (car args) (cadr args))]
+;            [(add) (if (<= (this 'capacity) size)
+;              (begin  (set! v2 (vec-copy v2 (make-vector (* 2 (vector-length v2)))))
+;                  (vector-set! v2 size (car args))
+;                  (set! size (+ size 1))
+;                  (set! capacity (vector-length v2)))
+;              (begin
+;                  (vector-set! v2 size (car args))
+;                  (set! size (+ size 1))))]
+;            [(remove) (begin (set! size (- size 1)) (vector-ref v2 size))]
+;            [(capacity) capacity]
+;            [(size) size]
+;            [else (errorf 'vector-list "illegal message to vector-list object: ~a" msg)])))) this))))
+;    (lambda (msg . args)
+;      (case msg
+;        [(a) a]
+;        [(b) b]
+;        [(add) (+ a b)]
+;        [(make) (make-vlist args)]))))
 
-       [class-exp (fields methods) (lambda-exp '(x)
-          (let ((res (filter-static-fields fields)))
-            (let-exp (append (map caddr res) (list 'make)) (append (map cadr res) (list (make-constr fields methods)))
-              (lambda-exp-improperls '(msg) '(args)
-                (se (case-exp
-                      (var-exp msg)
-                      (map parse-exp (append (filter-static-methods methods) (make-publics fields)))))
-
-
-            )]
-
+       [class-exp (fields methods)
+          (let* ((res (filter-static-fields fields)) (res2 (filter-public-fields res)))
+            (let-exp (append (map caddr res) (list 'make)) (map parse-exp (append (map cadr res) (list (make-constr fields methods))));;Even god has no idea what is going on anymore
+              (lambda-exp-improperls (list 'msg) (list 'args)
+                (list (se (case-exp
+                      (var-exp 'msg)
+                      (map parse-exp (cons (app-exp (list (var-exp 'make))) (append (map cadr (filter-static-methods methods)) (map caddr res))))
+                      (map parse-exp (cons (app-exp (list (var-exp 'make) (var-exp 'args))) (append (map caddr (filter-static-methods methods)) (map caddr res))))))))))]
 
        [let*-exp (vars vals body)
 		 (syntax-expand (let-exp (list (car vars)) (list (car vals))
@@ -320,19 +393,19 @@
                                    (list (if-exp '(var-exp car-body)
                                                  '(var-exp car-body)
                                                   (syntax-expand (or-exp (cdr body)))))))))]
-       [if-exp (id true false)
-	       (if-exp (syntax-expand id)
-		       (syntax-expand true)
-		       (syntax-expand false))]
-       [if-exp-ne (id true)
+        [if-exp (id true false)
+	         (if-exp (syntax-expand id)
+		        (syntax-expand true)
+		        (syntax-expand false))]
+        [if-exp-ne (id true)
 	       (if-exp-ne (syntax-expand id)
 		       (syntax-expand true))]
-       [case-exp (id conditions bodies)
-		 (cond
-		  [(null? (cdr conditions)) (se (if-exp-ne (member-exp id (cadar conditions)) (car bodies)))]
-		  [(equal? (var-exp 'else) (cadr conditions)) (se (if-exp (member-exp id (cadar conditions)) (car bodies) (cadr bodies)))]
-		  [else (se (if-exp (member-exp id (cadar conditions)) (car bodies) (case-exp id (cdr conditions) (cdr bodies))))])]
-       [else exp]))))
+        [case-exp (id conditions bodies)
+		      (cond
+		        [(null? (cdr conditions)) (se (if-exp-ne (member-exp id (cadar conditions)) (car bodies)))]
+		        [(equal? (var-exp 'else) (cadr conditions)) (se (if-exp (member-exp id (cadar conditions)) (car bodies) (cadr bodies)))]
+		        [else (se (if-exp (member-exp id (cadar conditions)) (car bodies) (case-exp id (cdr conditions) (cdr bodies))))])]
+        [else exp]))))
 
 (define se syntax-expand)
 

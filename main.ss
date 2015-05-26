@@ -10,6 +10,7 @@
   (lambda ()
     (load "env.ss")
     (load "datatypes.ss")
+    (load "class-parser.ss")
     (load "parse.ss")
     (load "interpreter.ss")
     (load "env.ss")
