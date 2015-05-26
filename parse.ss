@@ -27,6 +27,8 @@
       [(literal? datum) (lit-exp datum)]
       [(pair? datum)
         (cond
+          [(eqv? (car datum) 'class)
+            (class-parse datum)]
           [(eqv? (car datum) 'case-lambda)
             (let ((transp (matrix-transpose (cdr datum))))
               (case-lambda-exp (car transp) (map length (car transp)) (map (lambda (x) (map parse-exp x)) (cadr transp))))]

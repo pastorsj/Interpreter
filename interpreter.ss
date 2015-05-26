@@ -250,6 +250,25 @@
             "Bad primitive procedure name: ~s"
             prim-op)])))
 
+
+(define filter-static-fields
+  (lambda (ls)
+    (cond
+      [(null? ls) ls]
+      [else (cases classvar (car ls)
+          [public-static-var (pred name val) (cons (car ls) (filter-static-fields (cdr ls)))]
+          [private-static-var (pred name val) (cons (car ls) (filter-static-fields (cdr ls)))]
+          [else (filter-static-fields (cdr ls))])])))
+
+(define filter-static-methods
+  (lambda (ls)
+    (cond
+      [(null? ls) ls]
+      [else (cases method (car ls)
+          [public-static-method (name args body) (cons (car ls) (filter-static-methods (cdr ls)))]
+          [private-static-method (name args body) (cons (car ls) (filter-static-methods (cdr ls)))]
+          [else (filter-static-methods (cdr ls))])])))
+
 ;syntax-expand procedure
 
 (define syntax-expand
@@ -258,6 +277,21 @@
       (cases expression exp
        [let-exp (vars vals body)
 		(app-exp (append (list (lambda-exp vars (parse-refs (find-ref vars) (map syntax-expand body)))) vals))]
+       [define-exp (var val) (define-exp var (se val))]
+
+
+       [class-exp (fields methods) (lambda-exp '(x)
+          (let ((res (filter-static-fields fields)))
+            (let-exp (append (map caddr res) (list 'make)) (append (map cadr res) (list (make-constr fields methods)))
+              (lambda-exp-improperls '(msg) '(args)
+                (se (case-exp
+                      (var-exp msg)
+                      (map parse-exp (append (filter-static-methods methods) (make-publics fields)))))
+
+
+            )]
+
+
        [let*-exp (vars vals body)
 		 (syntax-expand (let-exp (list (car vars)) (list (car vals))
 					 (list (if (not (null? (cddr vals)))

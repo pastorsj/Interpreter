@@ -82,7 +82,10 @@
    (bodies (list-of (list-of expression?)))]
   [define-exp
    (id symbol?)
-   (body expression?)])
+   (body expression?)]
+  [class-exp
+   (fields (list-of classvar?))
+   (methods (list-of method?))])
 
 
 ; datatype for procedures.  At first there is only one
