@@ -129,7 +129,7 @@
    (idss (list-of (lambda (x)
                     (ormap (lambda (pred) (pred x))
                       (list improper-list? (list-of symbol?))))))
-   (bodies (list-of expression?))
+   (bodies (list-of scheme-value?))
    (env environment?)])
 
 ;For cells, use box datatype

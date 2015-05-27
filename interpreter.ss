@@ -24,28 +24,53 @@
                   (lambda ()
 			              (error 'apply-env "variable ~s is not bound" id)))))]
         [define-exp (id body) (set! global-env (extend-env (list id) (list (eval-exp body env)) global-env))]
-        [set-exp (var val) (apply-env env (cadr var)
+        [set-exp (var val) (cases environment env
+                              [recursively-extended-env-record (procnames idss bodies env)
+                              (apply-env env (cadr var)
                               (lambda (x) (set-box! x (eval-exp val env)))
                               (lambda ()
                                 (apply-env global-env (cadr var)
                                   (lambda (x) (set-box! x (eval-exp val env)))
                               void)))]
+                              [else
+                              (apply-env env (cadr var)
+                              (lambda (x) (set-box! x (eval-exp val env)))
+                              (lambda ()
+                                (apply-env global-env (cadr var)
+                                  (lambda (x) (set-box! x (eval-exp val env)))
+                              void)))])]
         [cond-exp (conds bodies) (eval-exp (syntax-expand exp) env)]
         [quote-exp (datum) datum]
         [when-exp (test bodies) (if (eval-exp test env) (eval-bodies bodies env))]
         [lit-exp (datum) datum]
         [var-exp (id) ; look up its value.
-          (apply-env env
+          (cases environment env
+            [recursively-extended-env-record (procs idss bodies env2)
+              (apply-env env
+            id
+            ;identity-proc ; procedure to call if var is in env
+            (lambda (x) (eval-exp (unbox x) env))
+            (lambda () ; procedure to call if var is not in env
+              (apply-env global-env  ; was init-env
+                id
+                ;identity-proc
+                unbox
+                  (lambda ()
+                    (eopl:error 'apply-env "variable ~s is not bound" id)))))]
+            [else          (apply-env env
             id
 	          ;identity-proc ; procedure to call if var is in env
-	          unbox
+	          (lambda (x) (let ((res (unbox x)))
+                  (if (and (not (null? res)) (list? res) (eqv? (car res) 'lambda-exp-improperls))
+                          (eval-exp res env)
+                        res)))
             (lambda () ; procedure to call if var is not in env
 	            (apply-env global-env  ; was init-env
 		            id
 		            ;identity-proc
 		            unbox
                   (lambda ()
-			              (eopl:error 'apply-env "variable ~s is not bound" id)))))]
+			              (eopl:error 'apply-env "variable ~s is not bound" id)))))])]
         [app-exp (rands)
 	        (let ([proc-value (eval-exp (car rands) env)]
 		        [args (cdr rands)])
@@ -414,7 +439,7 @@
   (lambda (proc-names idss bodies old-env)
     (let ((res (clean-vars proc-names bodies '(() ()))))
       (recursively-extended-env-record
-        (car res) idss (cadr res) old-env))))
+        (car res) idss (map box (cadr res)) old-env))))
 
 (define clean-vars
   (lambda (idss bodies ls)
