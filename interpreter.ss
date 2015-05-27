@@ -338,33 +338,6 @@
 		(app-exp (append (list (lambda-exp vars (parse-refs (find-ref vars) (map syntax-expand body)))) vals))]
        [define-exp (var val) (define-exp var (se val))]
 
-;(define vector-list
-;  (let ((a 5) (b 3)
-;    (make-vlist (lambda (v)
-;      (letrec ((v2 (vec-copy (car v) (make-vector (vector-length (car v))))) (size (vector-length (car v))) (capacity (vector-length (car v)))
-;        (this (lambda (msg . args)
-;          (case msg ; Scheme's case is a similar to switch in some other languages.
-;            [(empty?) (eqv? (vector) v2)]
-;            [(get) (vector-ref v2 (car args))]
-;            [(set) (vector-set! v2 (car args) (cadr args))]
-;            [(add) (if (<= (this 'capacity) size)
-;              (begin  (set! v2 (vec-copy v2 (make-vector (* 2 (vector-length v2)))))
-;                  (vector-set! v2 size (car args))
-;                  (set! size (+ size 1))
-;                  (set! capacity (vector-length v2)))
-;              (begin
-;                  (vector-set! v2 size (car args))
-;                  (set! size (+ size 1))))]
-;            [(remove) (begin (set! size (- size 1)) (vector-ref v2 size))]
-;            [(capacity) capacity]
-;            [(size) size]
-;            [else (errorf 'vector-list "illegal message to vector-list object: ~a" msg)])))) this))))
-;    (lambda (msg . args)
-;      (case msg
-;        [(a) a]
-;        [(b) b]
-;        [(add) (+ a b)]
-;        [(make) (make-vlist args)]))))
 
        [class-exp (fields methods)
           (let* ((res (filter-static-fields fields)) (res2 (filter-public-fields res)))
