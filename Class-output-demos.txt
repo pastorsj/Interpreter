@@ -1,0 +1,981 @@
+(cd "c:/users/administrator/documents/github/interpreter")
+
+(load "main.ss")
+
+(se (parse-exp '(if (not (null? args))
+                      (let loop ((fields fields) (args args))
+                        (if (not (or (null? (car args) (null? args))))
+                            (set! (car fields) (car args))
+                            (loop (cdr fields) (cdr args)))))))
+
+(l)
+
+(eval-one-exp '(class foo
+                   ((integer? x 10) (static integer y 2))
+                   ((public static calc (()) y))))
+
+(eval-one-exp '(foo 'calc))
+
+(eval-one-exp '(define test (foo 5)))
+
+(eval-one-exp '(test x))
+
+(eval-one-exp 'test)
+
+(l)
+
+(eval-one-exp '(class foo
+                   ((integer? x 10) (static integer y 2))
+                   ((public static calc (()) y))))
+
+(l)
+
+(eval-one-exp '(class foo
+                   ((integer? x 10) (static integer y 2))
+                   ((public static calc (()) y))))
+
+(eval-one-exp '(define test (foo 5)))
+
+(eval-one-exp 'test)
+
+(trace eval-exp)
+
+(eval-one-exp '(define test (foo 5)))
+
+(eval-one-exp '(define test (foo 'make 5)))
+
+(untrace)
+
+(eval-one-exp '(define test (foo 'make 5)))
+
+(eval-one-exp 'test)
+
+(eval-one-exp '(test x))
+
+(eval-one-exp '(test 'x))
+
+(l)
+
+(eval-one-exp '(class foo
+                   ((integer? x 10) (static integer y 2))
+                   ((public static calc (()) y))))
+
+(l)
+
+(eval-one-exp '(class foo
+                   ((integer? x 10) (static integer y 2))
+                   ((public static calc (()) y))))
+
+(l)
+
+(eval-one-exp '(class foo
+                   ((integer? x 10) (static integer y 2))
+                   ((public static calc (()) y))))
+
+(eval-one-exp '(define test (foo 'make 5)))
+
+(l)
+
+(eval-one-exp '(class foo
+                   ((integer? x 10) (static integer y 2))
+                   ((public static calc (()) y))))
+
+(eval-one-exp '(define test (foo 'make 5)))
+
+(l)
+
+(eval-one-exp '(class foo
+                   ((integer? x 10) (static integer y 2))
+                   ((public static calc (()) y))))
+
+(eval-one-exp '(define test (foo 'make 5)))
+
+(eval-one-exp '(define test (foo 'make)))
+
+(length '10)
+
+(trace filter-normal-fields)
+
+(eval-one-exp '(class foo
+                   ((integer? x 10) (static integer y 2))
+                   ((public static calc (()) y))))
+
+(l)
+
+(eval-one-exp '(class foo
+                   ((integer? x 10) (static integer y 2))
+                   ((public static calc (()) y))))
+
+(eval-one-exp '(define test (foo 'make)))
+
+(eval-one-exp '(test x))
+
+(eval-one-exp '(define test (foo 'make 5)))
+
+(eval-one-exp '(test x))
+
+(l)
+
+(eval-one-exp '(class foo
+                   ((integer? x 10) (static integer y 2))
+                   ((public static calc (()) y))))
+
+(eval-one-exp '(define test (foo 'make 5)))
+
+(eval-one-exp '(test x))
+
+(eval-one-exp '(test 'x))
+
+(l)
+
+(eval-one-exp '(class foo
+                   ((integer? x 10) (static integer y 2))
+                   ((public calc ((integer x 0)) (* x y)))))
+
+(trace method-parse)
+
+(eval-one-exp '(class foo
+                   ((integer? x 10) (static integer y 2))
+                   ((public calc ((integer x 0)) (* x y)))))
+
+(trace add-defaults)
+
+(eval-one-exp '(class foo
+                   ((integer? x 10) (static integer y 2))
+                   ((public calc ((integer x 0)) (* x y)))))
+
+(l)
+
+(eval-one-exp '(class foo
+                   ((integer? x 10) (static integer y 2))
+                   ((public calc ((integer x 0)) (* x y)))))
+
+(l)
+
+(eval-one-exp '(class foo
+                   ((integer? x 10) (static integer y 2))
+                   ((public calc ((integer x 0)) (* x y)))))
+
+(l)
+
+(eval-one-exp '(class foo
+                   ((integer? x 10) (static integer y 2))
+                   ((public calc ((integer x 0)) (* x y)))))
+
+(l)
+
+(eval-one-exp '(class foo
+                   ((integer? x 10) (static integer y 2))
+                   ((public calc ((integer x 0)) (* x y)))))
+
+(eval-one-exp '(define test (foo 'make 5)))
+
+(eval-one-exp '(test 'calc))
+
+(
+   eval-one-exp 'test)
+
+(l)
+
+(eval-one-exp '(class foo
+                   ((integer? x 10) (static integer y 2))
+                   ((public calc ((integer x 0)) (* x y)))))
+
+(eval-one-exp '(define test (foo 'make 5)))
+
+(eval-one-exp '(test 'calc))
+
+(eval-one-exp 'test)
+
+(trace apply-env)
+
+(eval-one-exp '(test 'calc))
+
+(eval-one-exp '(test 'calc 5))
+
+(untrace)
+
+(eval-one-exp '(test 'calc 5))
+
+(l)
+
+(eval-one-exp '(class foo
+                   ((integer? x 10) (static integer y 2))
+                   ((public calc ((integer x 0) (integer? y 2)) (* x y)))))
+
+(eval-one-exp '(define test (foo 'make 5)))
+
+(eval-one-exp '(test 'calc))
+
+(eval-one-exp '(test 'calc 4 5))
+
+(eval-one-exp '(define test (foo 'make 5)))
+
+(eval-one-exp '(class foo
+                   ((integer? x 10) (static integer y 2))
+                   ((public calc ((integer x 0) (integer? y 2)) (* x y))
+                    (public getX (()) x))))
+
+(l)
+
+(map cadr '((1 2) (3 4)))
+
+(map-cadr '((1 2) (3 4)))
+
+(l)
+
+(map-cadr '((1 2) (3 4)))
+
+(map cadr '(()))
+
+(l)
+
+(eval-one-exp '(class foo
+                   ((integer? x 10) (static integer y 2))
+                   ((public calc ((integer x 0) (integer? y 2)) (* x y))
+                    (public getX (()) x))))
+
+(eval-one-exp '(define test (foo 'make 5)))
+
+(eval-one-exp '(test 'getX))
+
+(eval-one-exp '(class foo
+                   ((integer? x 10) (static integer y 2))
+                   ((public calc ((integer x 0) (integer? y 2)) (* x y))
+                    (public getX (()) x)
+                    (public setX ((integer x 0)) (set! (this 'x) x)))))
+
+(eval-one-exp '(define test (foo 'make 5)))
+
+(eval-one-exp '(test 'getX))
+
+(eval-one-exp '(test 'setX 5))
+
+(eval-one-exp '(test 'getX))
+
+(eval-one-exp '(class foo
+                   ((integer? x 10) (static integer y 2))
+                   ((public calc ((integer x 0) (integer? y 2)) (* x y))
+                    (public getX (()) x)
+                    (public setX ((integer in 0)) (set! x in)))))
+
+(eval-one-exp '(test 'setX 5))
+
+(eval-one-exp '(define test (foo 'make 5)))
+
+(eval-one-exp '(test 'setX 5))
+
+(eval-one-exp '(class foo
+                   ((integer? x 10) (static integer y 2))
+                   ((public calc ((integer x 0) (integer? y 2)) (* x y))
+                    (public getX (()) x)
+                    (public setX ((integer in 0)) (set! x in)))))
+
+(eval-one-exp '(define test (foo 'make)))
+
+(eval-one-exp '(test 'setX 5))
+
+(eval-one-exp '(test 'getX))
+
+(eval-one-exp '(test 'setX 5))
+
+(eval-one-exp '(class foo
+                   ((integer? x 10) (static integer y 2))
+                   ((public calc ((integer x 0) (integer? y 2)) (* x y))
+                    (public getX (()) x)
+                    (public setX ((integer in 0)) (set! (this 'x) in)))))
+
+(eval-one-exp '(define test (foo 'make)))
+
+(eval-one-exp '(test 'setX 5))
+
+(eval-one-exp '(test 'getX))
+
+(eval-one-exp '(class foo
+                   ((integer? x 10) (static integer y 2))
+                   ((public calc ((integer x 0) (integer? y 2)) (* x y))
+                    (public setX ((integer in 0)) (set! (this 'x) in)))))
+
+(eval-one-exp '(define test (foo 'make)))
+
+(eval-one-exp '(test 'x))
+
+(eval-one-exp '(test 'setX 5))
+
+(eval-one-exp '(test 'x))
+
+global-env
+
+(reset-global-env)
+
+global-env
+
+(eval-one-exp '(class foo
+                   ((integer? x 10) (static integer y 2))
+                   ((public calc ((integer x 0) (integer? y 2)) (* x y))
+                    (public setX ((integer in 0)) (set! (this 'x) in)))))
+
+global-env
+
+(eval-one-exp '(class foo
+                   ((integer? x 10) (static integer y 2))
+                   ((public calc ((integer x 0) (integer? y 2)) (* x y))
+                    (public setX ((integer in 0)) (set! x in)))))
+
+(reset-global-env)
+
+(eval-one-exp '(class foo
+                   ((integer? x 10) (static integer y 2))
+                   ((public calc ((integer x 0) (integer? y 2)) (* x y))
+                    (public setX ((integer in 0)) (set! x in)))))
+
+global-env
+
+(eval-one-exp '(define test (foo 'make)))
+
+global-env
+
+(eval-one-exp '(test 'setX 5))
+
+(eval-one-exp '(test 'x))
+
+(eval-one-exp 'test)
+
+(l)
+
+(eval-one-exp '(class foo
+                   ((integer? x 10) (static integer y 2))
+                   ((public calc ((integer x 0) (integer? y 2)) (* x y))
+                    (public setX ((integer in 0)) (set! x in)))))
+
+(eval-one-exp '(define test (foo 'make)))
+
+(l)
+
+(eval-one-exp '(class foo
+                   ((integer? x 10) (static integer y 2))
+                   ((public calc ((integer x 0) (integer? y 2)) (* x y))
+                    (public setX ((integer in 0)) (set! x in)))))
+
+(eval-one-exp '(define test (foo 'make)))
+
+(l)
+
+(eval-one-exp '(class foo
+                   ((integer? x 10) (static integer y 2))
+                   ((public calc ((integer x 0) (integer? y 2)) (* x y))
+                    (public setX ((integer in 0)) (set! x in)))))
+
+(eval-one-exp '(define test (foo 'make)))
+
+(l)
+
+(eval-one-exp '(class foo
+                   ((integer? x 10) (static integer y 2))
+                   ((public calc ((integer x 0) (integer? y 2)) (* x y))
+                    (public setX ((integer in 0)) (set! x in)))))
+
+(eval-one-exp '(define test (foo 'make)))
+
+(eval-one-exp '(test 'setX 5))
+
+(eval-one-exp 'test)
+
+(eval-one-exp '(test 'x))
+
+(l)
+
+(eval-one-exp '(class foo
+                   ((integer? x 10) (static integer y 2))
+                   ((public calc ((integer x 0) (integer? y 2)) (* x y))
+                    (public setX ((integer in 0)) (set! x in)))))
+
+(eval-one-exp '(define test (foo 'make)))
+
+(eval-one-exp '(test 'setX 5))
+
+(l)
+
+(eval-one-exp '(class foo
+                   ((integer? x 10) (static integer y 2))
+                   ((public calc ((integer x 0) (integer? y 2)) (* x y))
+                    (public setX ((integer in 0)) (set! x in)))))
+
+(eval-one-exp '(define test (foo 'make)))
+
+(eval-one-exp '(test 'setX 5))
+
+(eval-one-exp '(test 'x))
+
+(eval-one-exp 'test)
+
+(l)
+
+(eval-one-exp '(class foo
+                   ((integer? x 10) (static integer y 2))
+                   ((public calc ((integer x 0) (integer? y 2)) (* x y))
+                    (public setX ((integer in 0)) (set! x in)))))
+
+(eval-one-exp '(define test (foo 'make)))
+
+(eval-one-exp '(test 'setX 5))
+
+(eval-one-exp 'test)
+
+(l)
+
+(eval-one-exp '(class foo
+                   ((integer? x 10) (static integer y 2))
+                   ((public calc ((integer x 0) (integer? y 2)) (* x y))
+                    (public setX ((integer in 0)) (set! x in)))))
+
+(eval-one-exp '(define test (foo 'make)))
+
+(eval-one-exp '(test 'setX 5))
+
+(eval-one-exp '(test 'x))
+
+(trace apply-env)
+
+(eval-one-exp '(test 'setX 5))
+
+(untrace)
+
+(reset-global-env)
+
+(eval-one-exp '(class foo
+                   ((integer? x 10) (static integer y 2))
+                   ((public calc ((integer x 0) (integer? y 2)) (* x y))
+                    (public setX ((integer in 0)) (set! x in)))))
+
+(eval-one-exp 'foo)
+
+(eval-one-exp '(define test (foo 'make)))
+
+(eval-one-exp 'test)
+
+(l)
+
+(eval-one-exp '(class foo
+                   ((integer? x 10) (static integer y 2))
+                   ((public calc ((integer x 0) (integer? y 2)) (* x y))
+                    (public setX ((integer in 0)) (set! x in)))))
+
+(eval-one-exp '(define test (foo 'make)))
+
+(eval-one-exp '(test 'setX 5))
+
+(l)
+
+(eval-one-exp '(class foo
+                   ((integer? x 10) (static integer y 2))
+                   ((public calc ((integer x 0) (integer? y 2)) (* x y))
+                    (public setX ((integer in 0)) (set! x in)))))
+
+(eval-one-exp '(define test (foo 'make)))
+
+(eval-one-exp '(test 'setX 5))
+
+(l)
+
+(eval-one-exp '(class foo
+                   ((integer? x 10) (static integer y 2))
+                   ((public calc ((integer x 0) (integer? y 2)) (* x y))
+                    (public setX ((integer in 0)) (set! x in)))))
+
+(eval-one-exp '(define test (foo 'make)))
+
+(eval-one-exp '(test 'setX 5))
+
+(l)
+
+(eval-one-exp '(class foo
+                   ((integer? x 10) (static integer y 2))
+                   ((public calc ((integer x 0) (integer? y 2)) (* x y))
+                    (public setX ((integer in 0)) (set! x in)))))
+
+(eval-one-exp '(define test (foo 'make)))
+
+(eval-one-exp '(test 'setX 5))
+
+(eval-one-exp 'foo)
+
+(eval-one-exp 'test)
+
+(l)
+
+(eval-one-exp '(class foo
+                   ((integer? x 10) (static integer y 2))
+                   ((public calc ((integer x 0) (integer? y 2)) (* x y))
+                    (public setX ((integer in 0)) (set! x in)))))
+
+(eval-one-exp '(define test (foo 'make)))
+
+(eval-one-exp '(test 'setX 5))
+
+(l)
+
+(eval-one-exp '(class foo
+                   ((integer? x 10) (static integer y 2))
+                   ((public calc ((integer x 0) (integer? y 2)) (* x y))
+                    (public setX ((integer in 0)) (set! x in)))))
+
+(eval-one-exp '(define test (foo 'make)))
+
+(eval-one-exp '(test 'setX 5))
+
+(l)
+
+(eval-one-exp '(class foo
+                   ((integer? x 10) (static integer y 2))
+                   ((public calc ((integer x 0) (integer? y 2)) (* x y))
+                    (public setX ((integer in 0)) (set! x in)))))
+
+(eval-one-exp '(define test (foo 'make)))
+
+(eval-one-exp '(test 'setX 5))
+
+(eval-one-exp '(test 'calc 5))
+
+(eval-one-exp 'test)
+
+(eval-one-exp '(foo make))
+
+(eval-one-exp '(foo 'make))
+
+(l)
+
+(eval-one-exp '(class foo
+                   ((integer? x 10) (static integer y 2))
+                   ((public calc ((integer x 0) (integer? y 2)) (* x y))
+                    (public setX ((integer in 0)) (set! x in)))))
+
+(eval-one-exp '(define test (foo 'make)))
+
+(eval-one-exp '(test 'calc 5))
+
+(l)
+
+(eval-one-exp '(class foo
+                   ((integer? x 10) (static integer y 2))
+                   ((public calc ((integer x 0) (integer? y 2)) (* x y))
+                    (public setX ((integer in 0)) (set! x in)))))
+
+(eval-one-exp '(define test (foo 'make)))
+
+(l)
+
+(eval-one-exp '(class foo
+                   ((integer? x 10) (static integer y 2))
+                   ((public calc ((integer x 0) (integer? y 2)) (* x y))
+                    (public setX ((integer in 0)) (set! x in)))))
+
+(eval-one-exp '(define test (foo 'make)))
+
+(load "tests.ss")
+
+(l)
+
+(eval-one-exp '(class foo
+                   ((integer? x 10) (static integer y 2))
+                   ((public calc ((integer x 0) (integer? y 2)) (* x y))
+                    (public setX ((integer in 0)) (set! x in)))))
+
+(l)
+
+(eval-one-exp '(class foo
+                   ((integer? x 10) (static integer y 2))
+                   ((public calc ((integer x 0) (integer? y 2)) (* x y))
+                    (public setX ((integer in 0)) (set! x in)))))
+
+(eval-one-exp 'foo)
+
+(eval-one-exp '(define test (foo 'make)))
+
+(eval-one-exp 'test)
+
+(eval-one-exp '(test 'setx 3))
+
+(l)
+
+(eval-one-exp '(class foo
+                   ((integer? x 10) (static integer y 2))
+                   ((public calc ((integer x 0) (integer? y 2)) (* x y))
+                    (public setX ((integer in 0)) (set! x in)))))
+
+(eval-one-exp '(define test (foo 'make)))
+
+(eval-one-exp '(test 'setx 3))
+
+(l)
+
+(eval-one-exp '(class foo
+                   ((integer? x 10) (static integer y 2))
+                   ((public calc ((integer x 0) (integer? y 2)) (* x y))
+                    (public setX ((integer in 0)) (set! x in)))))
+
+(eval-one-exp '(define test (foo 'make)))
+
+(eval-one-exp '(test 'setx 3))
+
+(l)
+
+(eval-one-exp '(class foo
+                   ((integer? x 10) (static integer y 2))
+                   ((public calc ((integer x 0) (integer? y 2)) (* x y))
+                    (public setX ((integer in 0)) (set! x in)))))
+
+(eval-one-exp '(define test (foo 'make)))
+
+(l)
+
+(eval-one-exp '(class foo
+                   ((integer? x 10) (static integer y 2))
+                   ((public calc ((integer x 0) (integer? y 2)) (* x y))
+                    (public setX ((integer in 0)) (set! x in)))))
+
+(eval-one-exp '(define test (foo 'make)))
+
+(l)
+
+(eval-one-exp '(class foo
+                   ((integer? x 10) (static integer y 2))
+                   ((public calc ((integer x 0) (integer? y 2)) (* x y))
+                    (public setX ((integer in 0)) (set! x in)))))
+
+(eval-one-exp '(define test (foo 'make)))
+
+(eval-one-exp '(test 'setx 3))
+
+(l)
+
+(eval-one-exp '(class foo
+                   ((integer? x 10) (static integer y 2))
+                   ((public calc ((integer x 0) (integer? y 2)) (* x y))
+                    (public setX ((integer in 0)) (set! x in)))))
+
+(l)
+
+(eval-one-exp '(class foo
+                   ((integer? x 10) (static integer y 2))
+                   ((public calc ((integer x 0) (integer? y 2)) (* x y))
+                    (public setX ((integer in 0)) (set! x in)))))
+
+(l)
+
+(eval-one-exp '(class foo
+                   ((integer? x 10) (static integer y 2))
+                   ((public calc ((integer x 0) (integer? y 2)) (* x y))
+                    (public setX ((integer in 0)) (set! x in)))))
+
+(l)
+
+(eval-one-exp '(class foo
+                   ((integer? x 10) (static integer y 2))
+                   ((public calc ((integer x 0) (integer? y 2)) (* x y))
+                    (public setX ((integer in 0)) (set! x in)))))
+
+(eval-one-exp '(define test (foo 'make)))
+
+(l)
+
+(eval-one-exp '(class foo
+                   ((integer? x 10) (static integer y 2))
+                   ((public calc ((integer x 0) (integer? y 2)) (* x y))
+                    (public setX ((integer in 0)) (set! x in)))))
+
+(eval-one-exp '(define test (foo 'make)))
+
+(eval-one-exp '(test 'setx 3))
+
+(l)
+
+(eval-one-exp '(class foo
+                   ((integer? x 10) (static integer y 2))
+                   ((public calc ((integer x 0) (integer? y 2)) (* x y))
+                    (public setX ((integer in 0)) (set! x in)))))
+
+(eval-one-exp '(define test (foo 'make)))
+
+(eval-one-exp '(test 'setx 3))
+
+(l)
+
+(eval-one-exp '(class foo
+                   ((integer? x 10) (static integer y 2))
+                   ((public calc ((integer x 0) (integer? y 2)) (* x y))
+                    (public setX ((integer in 0)) (set! x in)))))
+
+(eval-one-exp '(define test (foo 'make)))
+
+(eval-one-exp '(test 'setx 3))
+
+(l)
+
+(eval-one-exp '(class foo
+                   ((integer? x 10) (static integer y 2))
+                   ((public calc ((integer x 0) (integer? y 2)) (* x y))
+                    (public setX ((integer in 0)) (set! x in)))))
+
+(eval-one-exp '(define test (foo 'make)))
+
+(l)
+
+(eval-one-exp '(class foo
+                   ((integer? x 10) (static integer y 2))
+                   ((public calc ((integer x 0) (integer? y 2)) (* x y))
+                    (public setX ((integer in 0)) (set! x in)))))
+
+(eval-one-exp '(define test (foo 'make)))
+
+(eval-one-exp '(test 'setx 3))
+
+(eval-one-exp '(test 'x))
+
+(eval-one-exp '(class foo
+                   ((integer? x 10) (static integer y 2))
+                   ((public calc ((integer x 0) (integer? y 2)) (* x y))
+                    (public setX ((integer in 0)) (set! x in)))))
+
+(eval-one-exp '(class foo
+                   ((integer? x 10) (static integer y 2))
+                   ((public calc ((thisdoesnotmatter x 0) (integer? y 2)) (* x y))
+                    (public setX ((integer? in 0)) (set! x in)))))
+
+(eval-one-exp '(class foo
+                   ((integer? x 10) (static integer y 2))
+                   ((public calc ((integer? x 0) (integer? y 2)) (* x y))
+                    (public setX ((integer? in 0)) (set! x in)))))
+
+
+(eval-one-exp '(class semi 
+((integer? load) (integer? distance) (integer? speed))
+((public getLoad (()) (this 'load))
+(public getDistance (()) (this 'distance))
+(public getSpeed (()) (this 'speed))
+(public time (()) (/ (this 'distance) (this 'speed))))))
+
+
+(eval-one-exp '(class semi 
+((integer? load 0) (integer? distance 0) (integer? speed 0))
+((public getLoad (()) (this 'load))
+(public getDistance (()) (this 'distance))
+(public getSpeed (()) (this 'speed))
+(public time (()) (/ (this 'distance) (this 'speed))))))
+
+(eval-one-exp '(define test (semi 'make)))
+
+(eval-one-exp '(test getSpeed))
+
+(eval-one-exp '(test 'getSpeed))
+
+(eval-one-exp '(test speed))
+
+(eval-one-exp '(test 'speed))
+
+(eval-one-exp '(class semi 
+((integer? load 0) (integer? distance 0) (integer? speed 0))
+((public getLoad (()) (this 'load))
+(public getDistance (()) (this 'distance))
+(public getSpeed (()) (this 'speed))
+ (public setLoad ((integer? x)) (set! (this 'load x)))
+ (public setSpeed ((integer? x)) (set! (this 'speed x)))
+ (public setDistane ((integer? x)) (set! (this 'distance x)))
+(public time (()) (/ (this 'distance) (this 'speed))))))
+
+(eval-one-exp '(class semi 
+((integer? load 0) (integer? distance 0) (integer? speed 0))
+((public getLoad (()) (this 'load))
+(public getDistance (()) (this 'distance))
+(public getSpeed (()) (this 'speed))
+ (public setLoad ((integer? x)) (set! (this 'load) x))
+ (public setSpeed ((integer? x)) (set! (this 'speed) x))
+ (public setDistane ((integer? x)) (set! (this 'distance) x))
+(public time (()) (/ (this 'distance) (this 'speed))))))
+
+(eval-one-exp '(define test (semi 'make)))
+
+(eval-one-exp '(test 'setSpeed 5))
+
+(eval-one-exp '(test 'getSpeed))
+
+(eval-one-exp '(class semi 
+((integer? load 0) (integer? distance 0) (integer? speed 0))
+((public getLoad (()) (this 'load))
+(public getDistance (()) (this 'distance))
+(public getSpeed (()) (this 'speed))
+ (public setLoad ((integer? x)) (set! 'load x))
+ (public setSpeed ((integer? x)) (set! 'speed x))
+ (public setDistane ((integer? x)) (set! 'distance x))
+(public time (()) (/ (this 'distance) (this 'speed))))))
+
+(eval-one-exp '(define test (semi 'make)))
+
+(eval-one-exp '(test 'setSpeed 5))
+
+(eval-one-exp '(test 'getSpeed))
+
+(eval-one-exp '(test 'setDistance 5))
+
+(eval-one-exp '(test 'time))
+
+(eval-one-exp '(class semi 
+((integer? load 0) (integer? distance 0) (integer? speed 0))
+((public getLoad (()) (this 'load))
+(public getDistance (()) (this 'distance))
+(public getSpeed (()) (this 'speed))
+ (public setLoad ((integer? x)) (set! 'load x))
+ (public setSpeed ((integer? x)) (set! 'speed x))
+ (public setDistane ((integer? x)) (set! 'distance x))
+(public time (()) (/ 'distance 'speed)))))
+
+(eval-one-exp '(define test (semi 'make)))
+
+(eval-one-exp '(test 'setDistance 5))
+
+(eval-one-exp '(test 'setSpeed 5))
+
+(eval-one-exp '(test 'time))
+
+(eval-one-exp '(test 'getSpeed))
+
+(reset global-env)
+
+(reset-global-env)
+
+(eval-one-exp '(class semi 
+((integer? load 0) (integer? distance 0) (integer? speed 0))
+((public getLoad (()) (this 'load))
+(public getDistance (()) (this 'distance))
+(public getSpeed (()) (this 'speed))
+ (public setLoad ((integer? x)) (set! 'load x))
+ (public setSpeed ((integer? x)) (set! 'speed x))
+ (public setDistane ((integer? x)) (set! 'distance x))
+(public time (()) (/ 'distance 'speed)))))
+
+(eval-one-exp '(define test (semi 'make)))
+
+(eval-one-exp '(class semi 
+((integer? load 0) (integer? distance 0) (integer? speed 0))
+((public getLoad (()) (this 'load))
+(public getDistance (()) (this 'distance))
+(public getSpeed (()) (this 'speed))
+ (public setLoad ((integer? x)) (set! 'load x))
+ (public setSpeed ((integer? x)) (set! 'speed x))
+ (public setDistane ((integer? x)) (set! 'distance x))
+(public time (()) (/ distance speed)))))
+
+(eval-one-exp '(define test (semi 'make)))
+
+(eval-one-exp '(test 'setSpeed 5))
+
+(eval-one-exp '(test 'setDistance 5))
+
+(eval-one-exp '(test 'time))
+
+(eval-one-exp '(test 'getSpeed))
+
+(eval-one-exp '(test 'getDistance))
+
+(eval-one-exp '(class semi 
+((integer? load 0) (integer? distance 0) (integer? speed 0))
+((public getLoad (()) (this 'load))
+(public getDistance (()) (this 'distance))
+(public getSpeed (()) (this 'speed))
+ (public setLoad ((integer? x)) (set! 'load x))
+ (public setSpeed ((integer? x)) (set! 'speed x))
+ (public setDistance ((integer? x)) (set! 'distance x))
+(public time (()) (/ distance speed)))))
+
+(eval-one-exp '(define test (semi 'make)))
+
+(eval-one-exp '(test 'setDistance 5))
+
+(eval-one-exp '(test 'setSpeed 5))
+
+(eval-one-exp '(test 'time))
+
+(reset-global-env)
+
+(eval-one-exp '(class foo
+                   ((integer? x 10) (static integer y 2))
+                   ((public calc ((integer x 0) (integer? y 2)) (* x y))
+                    (public setX ((integer in 0)) (set! x in)))))
+
+(eval-one-exp '(define testfoo (foo 'make)))
+
+(eval-one-exp '(testfoo 'calc 1 2))
+
+(eval-one-exp '(class foo
+                   ((integer? x 10) (static integer y 2))
+                   ((public calc ((integer x 0) (integer? y 2)) (* (this 'x) y))
+                    (public setX ((integer in 0)) (set! x in)))))
+
+(eval-one-exp '(define test2 (foo 'make)))
+
+(eval-one-exp '(test2 'setX 5))
+
+(eval-one-exp '(test2 'calc 1 2))
+
+(eval-one-exp '(class linked-list
+                   ((linked-list? ll) (scheme-value? item))
+                   ((public init ((linked-list? ll2) (scheme-value it2))
+                      (begin (set! ll ll2) (set! item it2)))
+                    (public setItem ((scheme-value it2)) (set! item it2))
+                    (public setNext ((linked-list? ll2)) (set! ll ll2))
+                    (public next (()) ll))))
+
+(eval-one-exp '(class linked-list
+                   ((linked-list? ll '()) (scheme-value? item '()))
+                   ((public init ((linked-list? ll2 '()) (scheme-value it2 '()))
+                      (begin (set! ll ll2) (set! item it2)))
+                    (public setItem ((scheme-value it2 '())) (set! item it2))
+                    (public setNext ((linked-list? ll2 '())) (set! ll ll2))
+                    (public next (()) ll))))
+
+(eval-one-exp '(define list1 (linked-list 'make)))
+
+(eval-one-exp '(list1 'init (linked-list 'make) (4)))
+
+(eval-one-exp '(list1 'init (linked-list 'make) 4))
+
+(eval-one-exp '(list1 item))
+
+(eval-one-exp '(list1 'item))
+
+(eval-one-exp '(list1 'next))
+
+(eval-one-exp '((list 'next) 'item))
+
+(eval-one-exp '((list1 'next) 'item))
+
+(eval-one-exp '((list1 'next) 'init '() 5))
+
+(eval-one-exp '((list1 'next) 'item))
+
+(eval-one-exp '(class linked-list
+                   ((linked-list? ll '()) (scheme-value? item '()))
+                   ((public init ((linked-list? ll2 '()) (scheme-value it2 '()))
+                      (begin (set! ll ll2) (set! item it2)))
+                    (public setItem ((scheme-value it2 '())) (set! item it2))
+                    (public setNext ((linked-list? ll2 '())) (set! ll ll2))
+                    (public next (()) ll)
+                    (public recurs ((int x 0)) (if (= 0 x) x (- x 1))))))
+
+(eval-one-exp '(define list1 (linked-list 'make)))
+
+(eval-one-exp '(list1 'recurs 9))
+
+(eval-one-exp '(class linked-list
+                   ((linked-list? ll '()) (scheme-value? item '()))
+                   ((public init ((linked-list? ll2 '()) (scheme-value it2 '()))
+                      (begin (set! ll ll2) (set! item it2)))
+                    (public setItem ((scheme-value it2 '())) (set! item it2))
+                    (public setNext ((linked-list? ll2 '())) (set! ll ll2))
+                    (public next (()) ll)
+                    (public recurs ((int x 0)) (if (= 0 x) x (this 'recurs (- x 1)))))))
+
+(eval-one-exp '(define list1 (linked-list 'make)))
+
+(eval-one-exp '(list1 'recurs 9))
+
