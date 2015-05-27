@@ -4,67 +4,71 @@
 
 (define-datatype classvar classvar?
 	[public-var
-		(pred procedure?)
+		(pred symbol?)
 		(name symbol?)
 		(val scheme-value?)]
 	[private-var
-		(pred procedure?)
+		(pred symbol?)
 		(name symbol?)
 		(val scheme-value?)]
 	[public-static-var
-		(pred procedure?)
+		(pred symbol?)
 		(name symbol?)
 		(val scheme-value?)]
 	[private-static-var
-		(pred procedure?)
+		(pred symbol?)
 		(name symbol?)
 		(val scheme-value?)])
 
 (define-datatype method method?
 	[public-method
 		(name symbol?)
-		(args (list-of (lambda (x) (or (null? x) (and (procedure? (car x)) (symbol? (cadr x)) (scheme-value? (caddr x)))))))
+		(args (list-of (lambda (x) (or (null? x) (and (symbol? (car x)) (symbol? (cadr x)) (scheme-value? (caddr x)))))))
 		(body expression?)]
 	[private-method
 		(name symbol?)
-		(args (list-of (lambda (x) (or (null? x) (and (procedure? (car x)) (symbol? (cadr x)) (scheme-value? (caddr x)))))))
+		(args (list-of (lambda (x) (or (null? x) (and (symbol? (car x)) (symbol? (cadr x)) (scheme-value? (caddr x)))))))
 		(body expression?)]
 	[public-static-method
 		(name symbol?)
-		(args (list-of (lambda (x) (or (null? x) (and (procedure? (car x)) (symbol? (cadr x)) (scheme-value? (caddr x)))))))
+		(args (list-of (lambda (x) (or (null? x) (and (symbol? (car x)) (symbol? (cadr x)) (scheme-value? (caddr x)))))))
 		(body expression?)]
 	[private-static-method
 		(name symbol?)
-		(args (list-of (lambda (x) (or (null? x) (and (procedure? (car x)) (symbol? (cadr x)) (scheme-value? (caddr x)))))))
+		(args (list-of (lambda (x) (or (null? x) (and (symbol? (car x)) (symbol? (cadr x)) (scheme-value? (caddr x)))))))
 		(body expression?)])
 
 (define typify
 	(lambda (ls)
-		(if (procedure? (car ls))
-			(public-var (car ls) (cadr ls) (if (null? (cddr ls)) (void) (caddr ls)))
 			(case (car ls)
 				[(public)
 					(if (equal? (cadr ls) 'static)
-						(public-static-var (caddr ls) (cadddr ls) (cond [(null? (cddddr ls)) (void)] [((caddr ls) (car (cddddr ls))) (car (cddddr ls))] [else (eopl:error 'fields "bad type")]))
-						(public-var (cadr ls) (caddr ls) (cond [(null? (cdddr ls)) (void)] [((cadr ls) (car (cdddr ls))) (car (cdddr ls))] [else (eopl:error 'fields "bad type")])))]
+						(public-static-var (caddr ls) (cadddr ls) (cond [(null? (cddddr ls)) (void)] [else (car (cddddr ls))]))
+																		;[((caddr ls) (car (cddddr ls))) (car (cddddr ls))] [else (eopl:error 'fields "bad type")]))
+						(public-var (cadr ls) (caddr ls) (cond [(null? (cdddr ls)) (void)] [else (cadddr ls)])))]
+						;[((cadr ls) (car (cdddr ls))) (car (cdddr ls))] [else (eopl:error 'fields "bad type")])))]
 				[(private)
 					(if (equal? (cadr ls) 'static)
-						(private-static-var (caddr ls) (cadddr ls) (cond [(null? (cddddr ls)) (void)] [((caddr ls) (car (cddddr ls))) (car (cddddr ls))] [else (eopl:error 'fields "bad type")]))
-						(private-var (cadr ls) (caddr ls) (cond [(null? (cdddr ls)) (void)] [((cadr ls) (car (cdddr ls))) (car (cdddr ls))] [else (eopl:error 'fields "bad type")])))]
+						(private-static-var (caddr ls) (cadddr ls) (cond [(null? (cddddr ls)) (void)] [else (car (cddddr ls))]))
+						;[((caddr ls) (car (cddddr ls))) (car (cddddr ls))] [else (eopl:error 'fields "bad type")]))
+						(private-var (cadr ls) (caddr ls) (cond [(null? (cdddr ls)) (void)] [else (cadddr ls)])))]
+						;[((cadr ls) (car (cdddr ls))) (car (cdddr ls))] [else (eopl:error 'fields "bad type")])))]
 				[(static)
-					(public-static-var (cadr ls) (caddr ls) (cond [(null? (cdddr ls)) (void)] [((cadr ls) (car (cdddr ls))) (car (cdddr ls))] [else (eopl:error 'fields "bad type")]))]))))
+					(public-static-var (cadr ls) (caddr ls) (cond [(null? (cdddr ls)) (void)] [else (cadddr ls)]))]
+					;[((cadr ls) (car (cdddr ls))) (car (cdddr ls))] [else (eopl:error 'fields "bad type")]))]))))
+				[else (public-var (car ls) (cadr ls) (cond [(null? (cddr ls)) (void)] [else (caddr ls)]))])))
 
 (define method-parse
 	(lambda (method classname)
 		(case (car method)
 			[(public)
-				(if (equal? (cadr ls) 'static)
+				(if (equal? (cadr method) 'static)
 					(let ((args (cadddr method)) (name (caddr method)))
 						(public-static-method name (add-defaults args) (se (parse-exp (list 'begin (car (cddddr method)))))))
 					(let ((args (caddr method)) (name (cadr method)))
 							(public-method name (add-defaults args) (se (parse-exp (list 'begin (cadddr method)))))))]
 			[(private)
-				(if (equal? (cadr ls) 'static)
+				(if (equal? (cadr method) 'static)
 					(let ((args (cadddr method)) (name (caddr method)))
 						(private-static-method name (add-defaults args) (se (parse-exp (list 'begin (car (cddddr method)))))))
 					(let ((args (caddr method)) (name (cadr method)))
