@@ -300,58 +300,26 @@
 
 (define make-constr
   (lambda (fields methods)
-    (let ((fields (filter-normal-fields fields)) (methods (filter-normal-methods methods)))
+    (let ((fields fields) (methods methods))
       (lambda-exp (list 'args)
         (list (letrec-exp (cons 'this (map (lambda (x) (caddr x)) fields)) '((msg . args))
               (cons (make-constr-help fields methods) (map (lambda (x) (parse-exp (cadddr x))) fields))
               (list (se 
                 (let-exp '(fields) (map parse-exp (map caddr fields))
-                '((if-exp-ne
-                    (app-exp
-                      ((var-exp not) (app-exp ((var-exp null?) (var-exp args)))))
-                    (letrec-exp
-                      (loop fields args)
-                      ((fields args) () ())
-                      ((lambda-exp
-                         (fields args)
-                         ((if-exp
-                            (app-exp
-                              ((var-exp not)
-                                (app-exp
-                                  ((lambda-exp
-                                     (car-body)
-                                     ((if-exp
-                                        (var-exp car-body)
-                                        (var-exp car-body)
-                                        (if-exp
-                                          (app-exp
-                                            ((var-exp null?)
-                                              (app-exp ((var-exp car) (var-exp args)))))
-                                          (app-exp
-                                            ((var-exp null?)
-                                              (app-exp ((var-exp car) (var-exp args)))))
-                                          (lit-exp #f)))))
-                                    (app-exp ((var-exp null?) (var-exp args)))))))
-                            (set-exp
-                              (app-exp ((var-exp car) (var-exp fields)))
-                              (app-exp ((var-exp car) (var-exp args))))
-                            (app-exp
-                              ((var-exp loop)
-                                (app-exp ((var-exp cdr) (var-exp fields)))
-                                (app-exp ((var-exp cdr) (var-exp args))))))))
-                        (var-exp fields)
-                        (var-exp args))
-                      ((app-exp
-                         ((var-exp loop) (var-exp fields) (var-exp args)))))) (var-exp this))))))))))) ;(arg-default fields args)
+                (list (se (parse-exp '(if (not (null? args))
+                      (let loop ((fields fields) (args args))
+                        (if (not (or (null? (car args) (null? args))))
+                            (set! (car fields) (car args))
+                            (loop (cdr fields) (cdr args))))))) (var-exp 'this)))))))))))
 
 (define make-constr-help
   (lambda (fields methods)
-    (let ((res (filter-normal-fields (filter-public-fields fields))))
+    (let ((res (filter-public-fields fields)))
       (lambda-exp-improperls (list 'msg) (list 'args)
         (list (se (case-exp
           (var-exp 'msg)
-          (map (lambda (x) (app-exp (list x))) (append (map quote-exp (map cadr (filter-normal-methods methods))) (map (lambda (x) (quote-exp (caddr x))) res)))
-          (append (map cadddr (filter-normal-methods methods)) (map (lambda (x) (parse-exp (caddr x))) res)))))))))
+          (map (lambda (x) (app-exp (list x))) (append (map quote-exp (map cadr methods)) (map (lambda (x) (quote-exp (caddr x))) res)))
+          (append (map cadddr methods) (map (lambda (x) (parse-exp (caddr x))) res)))))))))
 
 (define arg-default       ;;;deprecated
   (lambda (fields args)
