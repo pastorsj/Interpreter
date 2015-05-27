@@ -64,20 +64,20 @@
 			[(public)
 				(if (equal? (cadr method) 'static)
 					(let ((args (cadddr method)) (name (caddr method)))
-						(public-static-method name (add-defaults args) (se (parse-exp (list 'begin (list 'apply (list 'lambda (map cadr args) (car (cddddr method))) 'args))))))
+						(public-static-method name (add-defaults args) (se (parse-exp (list 'begin (list 'apply (list 'lambda (if (null? (car args)) '() (map cadr args)) (car (cddddr method))) 'args))))))
 					(let ((args (caddr method)) (name (cadr method)))
-							(public-method name (add-defaults args) (se (parse-exp (list 'begin (list 'apply (list 'lambda (map cadr args) (cadddr method)) 'args)))))))]
+							(public-method name (add-defaults args) (se (parse-exp (list 'begin (list 'apply (list 'lambda (if (null? (car args)) '() (map cadr args)) (cadddr method)) 'args)))))))]
 			[(private)
 				(if (equal? (cadr method) 'static)
 					(let ((args (cadddr method)) (name (caddr method)))
-						(private-static-method name (add-defaults args) (se (parse-exp (list 'begin (list 'apply (list 'lambda (map cadr args) (car (cddddr method))) 'args))))))
+						(private-static-method name (add-defaults args) (se (parse-exp (list 'begin (list 'apply (list 'lambda (if (null? (car args)) '() (map cadr args)) (car (cddddr method))) 'args))))))
 					(let ((args (caddr method)) (name (cadr method)))
-							(private-method name (add-defaults args) (se (parse-exp (list 'begin (list 'apply (list 'lambda (map cadr args) (cadddr method)) 'args)))))))]
+							(private-method name (add-defaults args) (se (parse-exp (list 'begin (list 'apply (list 'lambda (if (null? (car args)) '() (map cadr args)) (cadddr method)) 'args)))))))]
 			[(static)
 					(let ((args (caddr method)))
-						(public-static-method (add-defaults args) (se (parse-exp (list 'begin (list 'apply (list 'lambda (map cadr args) (cadddr method)) 'args))))))]
+						(public-static-method (add-defaults args) (se (parse-exp (list 'begin (list 'apply (list 'lambda (if (null? (car args)) '() (map cadr args)) (cadddr method)) 'args))))))]
 			[else (let ((args (cadr method)))
-							(public-method name (add-defaults args) (se (parse-exp (list 'begin (list 'apply (list 'lambda (map cadr args) (caddr method)) 'args))))))])))
+							(public-method name (add-defaults args) (se (parse-exp (list 'begin (list 'apply (list 'lambda (if (null? (car args)) '() (map cadr args)) (caddr method)) 'args))))))])))
 
 (define replace-this
 	(lambda (code)
@@ -91,4 +91,4 @@
 (define add-defaults
 	(lambda (args)
 		(if (null? (car args)) args
-			(map (lambda (x) (list (car x) (cadr x) (if (null? (cddr x)) (void) (caddr x)))) args))))
+			(map (lambda (x) (list (car x) (cadr x) (if (null? (cddr x)) (void) (caddr x)))) args))))	
