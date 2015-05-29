@@ -1,132 +1,173 @@
-; top-level-eval evaluates a form in the global environment
+; Abstract syntax interpreter
+; By Jason Lane and Sam Pastoriza
+; Class modifications by Lexie Harris, Jason Lane, and Sam Pastoriza
 
-(define top-level-eval
+(define top-level-eval                                                              ; Evaluates an expression at the top level (i.e., in an empty environment)
   (lambda (form)
-    ; later we may add things that are not expressions.
     (eval-exp form (empty-env))))
 
-; eval-exp is the main component of the interpreter
 
-(define eval-exp
-  (let ([identity-proc (lambda (x) x)])
-    (lambda (exp env)
-      (cases expression exp
-        [ref-exp (id) ; look up its value.
-          (apply-env env
-            id
-	          ;identity-proc ; procedure to call if var is in env
-	          unbox
-            (lambda () ; procedure to call if var is not in env
-	            (apply-env global-env  ; was init-env
-		            id
-		            ;identity-proc
-		            unbox
-                  (lambda ()
-			              (error 'apply-env "variable ~s is not bound" id)))))]
-        [define-exp (id body) (set! global-env (extend-env (list id) (list (eval-exp body env)) global-env))]
-        [set-exp (var val) (cases environment env
-                              [recursively-extended-env-record (procnames idss bodies env)
-                              (apply-env env (cadr var)
-                              (lambda (x) (set-box! x (eval-exp val env)))
-                              (lambda ()
-                                (apply-env global-env (cadr var)
-                                  (lambda (x) (set-box! x (eval-exp val env)))
-                              void)))]
-                              [else
-                              (apply-env env (cadr var)
-                              (lambda (x) (set-box! x (eval-exp val env)))
-                              (lambda ()
-                                (apply-env global-env (cadr var)
-                                  (lambda (x) (set-box! x (eval-exp val env)))
-                              void)))])]
-        [cond-exp (conds bodies) (eval-exp (syntax-expand exp) env)]
-        [quote-exp (datum) datum]
-        [when-exp (test bodies) (if (eval-exp test env) (eval-bodies bodies env))]
-        [lit-exp (datum) datum]
-        [var-exp (id) ; look up its value.
+
+(define eval-exp                                                                    ; The main component of the interpreter in this version
+  (lambda (exp env)
+    (cases expression exp
+
+      [define-exp (id body)                                                         ; define-exp
+        (set!                                                                       ; Set the global env to an extension of itself that includes the defined var
+          global-env
+          (extend-env
+            (list id)
+            (list (eval-exp body env))
+            global-env))]
+
+      [set-exp (var val)                                                            ; set-exp
+        (cases environment env                                                      ; Set the value of the variable in the most local environment
+          [recursively-extended-env-record (procnames idss bodies env)              ; Special case for letrec (this shouldn't be necessary)
+            (apply-env
+              env
+              (cadr var)
+              (lambda (x) (set-box! x (eval-exp val env)))
+                (lambda ()
+                  (apply-env
+                    global-env
+                    (cadr var)
+                    (lambda (x) (set-box! x (eval-exp val env)))
+                      void)))]
+          [else                                                                     ; General case
+            (apply-env                                                              ; When you find the variable, change the value in the box
+              env
+              (cadr var)
+              (lambda (x) (set-box! x (eval-exp val env)))
+                (lambda ()
+                  (apply-env
+                    global-env
+                    (cadr var)
+                    (lambda (x) (set-box! x (eval-exp val env)))
+                    void)))])]
+
+        [cond-exp (conds bodies) (eval-exp (syntax-expand exp) env)]                ; cond-exp (re-evaluate as nexted ifs)
+
+        [quote-exp (datum) datum]                                                   ; quote-exp (return the value)
+
+        [when-exp (test bodies)                                                     ; when-exp
+          (if (eval-exp test env)
+              (eval-bodies bodies env))]
+
+        [lit-exp (datum) datum]                                                     ; lit-exp (return the value)
+
+        [var-exp (id)                                                               ; var-exp (look up the associated value)
           (cases environment env
-            [recursively-extended-env-record (procs idss bodies env2)
-              (apply-env env
-            id
-            ;identity-proc ; procedure to call if var is in env
-            (lambda (x) (eval-exp (unbox x) env))
-            (lambda () ; procedure to call if var is not in env
-              (apply-env global-env  ; was init-env
+            [recursively-extended-env-record (procs idss bodies env2)               ; Special case for letrec (this shouldn't be necessary)
+              (apply-env
+                env
                 id
-                ;identity-proc
-                unbox
+                (lambda (x) (eval-exp (unbox x) env))
                   (lambda ()
-                    (eopl:error 'apply-env "variable ~s is not bound" id)))))]
-            [else          (apply-env env
-            id
-	          ;identity-proc ; procedure to call if var is in env
-	          (lambda (x) (let ((res (unbox x)))
-                  (if (and (not (null? res)) (list? res) (eqv? (car res) 'lambda-exp-improperls))
+                    (apply-env
+                      global-env
+                      id
+                      unbox
+                      (lambda ()
+                        (eopl:error 'apply-env "variable ~s is not bound" id)))))]
+            [else                                                                   ; General case
+              (apply-env
+                env
+                id
+	              (lambda (x)
+                  (let ((res (unbox x)))
+                    (if
+                      (and
+                        (not (null? res))
+                        (list? res)
+                        (eqv? (car res) 'lambda-exp-improperls))                    ; Prevents an error in classes (this should be handled better)
                           (eval-exp res env)
                         res)))
-            (lambda () ; procedure to call if var is not in env
-	            (apply-env global-env  ; was init-env
-		            id
-		            ;identity-proc
-		            unbox
-                  (lambda ()
-			              (eopl:error 'apply-env "variable ~s is not bound" id)))))])]
-        [app-exp (rands)
-	        (let ([proc-value (eval-exp (car rands) env)]
+                (lambda ()
+	                (apply-env
+                    global-env
+		                id
+		                unbox
+                    (lambda ()
+			                (eopl:error 'apply-env "variable ~s is not bound" id)))))])]
+
+        [app-exp (rands)                                                            ; app-exp
+	        (let ([proc-value (eval-exp (car rands) env)]                             ; Apply the evaluation of the first argument to the rest
 		        [args (cdr rands)])
             (cases proc-val proc-value
-              [clos-proc (vars body env2) (apply-proc proc-value args env)]
-              [else (apply-proc proc-value (eval-rands args env) env)]))]
-        [let-exp (vars vals body)
-	        (let ([new-env (extend-env vars
-					  (eval-rands vals env)
-					  env)])
-		        (eval-bodies body new-env))]
-	[letrec-exp (procnames idss body letrec-body)
-		    (eval-bodies letrec-body
-			      (extend-env-recursively
-			       procnames idss body env))]
-        [member-exp (item list)
+              [clos-proc (vars body env2) (apply-proc proc-value args env)]         ; Clos-proc case (used to handle refs)
+              [else (apply-proc proc-value (eval-rands args env) env)]))]           ; Normal case
+
+	      [letrec-exp (procnames idss body letrec-body)                               ; letrec-exp
+		      (eval-bodies letrec-body
+			      (extend-env-recursively procnames idss body env))]
+
+        [member-exp (item list)                                                     ; member-exp
           (member (eval-exp item env) (map (lambda (x) (eval-exp x env)) list))]
-        [if-exp (id true false)
+
+        [if-exp (id true false)                                                     ; if-exp
 	        (if (eval-exp id env)
-		      (eval-exp true env)
-		      (eval-exp false env))]
-        [if-exp-ne (id true)
+		        (eval-exp true env)
+		        (eval-exp false env))]
+
+        [if-exp-ne (id true)                                                        ; if-exp-ne
 		      (if (eval-exp id env)
-		      (eval-exp true env))]
-        [lambda-exp (id body)
-		    (clos-proc id body env)]
-        [case-lambda-exp (idss lens bodies)
+		        (eval-exp true env))]
+
+        [lambda-exp (id body)                                                       ; lambda-exp
+		      (clos-proc id body env)]
+
+        [case-lambda-exp (idss lens bodies)                                         ; case-lambda-exp
           (case-clos-proc idss lens bodies env)]
-	[lambda-exp-improperls (reqs non-req body)
+
+	[lambda-exp-improperls (reqs non-req body)                                        ; lambda-exp-improperls
 			       (clos-improc (append reqs non-req) body env)]
-	[lambda-exp-nolimit (id body)
+
+	[lambda-exp-nolimit (id body)                                                     ; lambda-exp-nolimit
 			    (clos-improc (list id) body env)]
-	[while-exp (test body)
+
+	[while-exp (test body)                                                            ; while-exp
 		   (if (eval-exp test env)
 		       (eval-exp (app-exp `((lambda-exp ()
 					      ((app-exp ((lambda-exp ()  ,body)))
 					      (while-exp ,test ,body))))) env))]
-        [else (eopl:error 'eval-exp "Bad abstract syntax: ~a" exp)]))))
 
-(define eval-refs2
-  (lambda (exp args env)
-    (eval-exp (eval-refs exp args) env)))
+  [else (eopl:error 'eval-exp "Bad abstract syntax: ~a" exp)])))
 
-(define eval-rands-ref2
-  (lambda (exp args env)
-    (eval-rands (eval-rands-ref (cadr exp) args) env)))
 
-(define eval-refs
-  (lambda (lam args env)
-    (cases expression lam
-      [lambda-exp (id body)
-        (let ((res (replace-refs id body args)))
-          (clos-proc (car res) (cadr res) env))]
-      [else eopl:error 'eval-refs "I don't know how you managed that"])))
 
-(define replace-refs
+(define apply-proc                                                                  ; Apply a procedure to its arguments
+  (lambda (proc-value args env2)                                                    ; An env is needed for ref cases
+    (cases proc-val proc-value
+
+      [prim-proc (op) (apply-prim-proc op args env2)]                               ; prim-proc case
+
+      [clos-proc (vars body env) (if (ormap list? vars)                             ; clos-proc case (lambda-exp)
+                                  (eval-bodies                                      ; refs case
+                                    (cadr (replace-refs vars body args))
+                                    (extend-env
+                                      (car (replace-refs vars body args))
+                                      (remove-refs vars (if ((list-of expression?) args) (eval-rands args env2) args))
+                                      (if (equal? (cadr (replace-refs vars body args)) body) env env2)))
+                                  (eval-bodies                                      ; no-ref case
+                                    body
+                                    (extend-env vars
+                                      (if ((list-of expression?) args) (eval-rands args env2) args)
+                                      env)))]
+
+      [case-clos-proc (idss lens bodies env)                                        ; case-proc case (case-lambda-exp)
+        (let ((pos (list-find-position (length args) lens)))
+          (eval-bodies (list-ref bodies pos) (extend-env (list-ref idss pos) args env)))]
+
+      [clos-improc (vars body env)                                                  ; clos-improc case (lambda-exp-improperls, lambda-exp-nolimit)
+        (eval-bodies body (extend-improper-env vars args env))]
+
+      [else (error 'apply-proc
+                   "Attempt to apply bad procedure: ~s"
+                    proc-value)])))
+
+
+
+(define replace-refs                                                                ; Replaces (ref-exp)s with the correct arg
   (lambda (vars body args)
     (cond [(null? vars) (list vars body)]
           [(symbol? (car vars))
@@ -136,7 +177,7 @@
             (let ((res (replace-refs (cdr vars) body (cdr args))))
               (list (car res) (replace-help (car vars) (cadr res) (car args))))])))
 
-(define replace-help
+(define replace-help                                                                ; Helper proc for replace-refs
   (lambda (var exps arg)
     (cond [(null? exps) exps]
           [(expression? exps)
@@ -149,22 +190,18 @@
               [else exps])]
           [(list-of expression?) (cons (replace-help var (car exps) arg) (replace-help var (cdr exps) arg))])))
 
-(define eval-rands-ref
+(define remove-refs                                                                 ; Filters out (ref-exp)s
   (lambda (vars args)
     (cond [(null? vars) args]
-          [(symbol? (car vars)) (cons (car args) (eval-rands-ref (cdr vars) (cdr args)))]
-          [else (eval-rands-ref (cdr vars) (cdr args))])))
+          [(symbol? (car vars)) (cons (car args) (remove-refs (cdr vars) (cdr args)))]
+          [else (remove-refs (cdr vars) (cdr args))])))
 
-; evaluate the list of operands, putting results into a list
-
-(define eval-rands
+(define eval-rands                                                                  ; Evaluate a list of bodies and return a list of results
   (lambda (rands env)
     (map (lambda (x)
 	   (eval-exp x env)) rands)))
 
-; evaluate a list of procedures, returning the last one (used for lets)
-
-(define eval-bodies
+(define eval-bodies                                                                 ; Evaluate a list of bodies and return the final result
   (lambda (bodies env)
     (if (null? (cdr bodies))
       (eval-exp (car bodies) env)
@@ -172,44 +209,22 @@
         (eval-exp (car bodies) env)
         (eval-bodies (cdr bodies) env)))))
 
-;  Apply a procedure to its arguments.
-;  At this point, we only have primitive procedures.
-;  User-defined procedures will be added later.
+(define *prim-proc-names*                                                           ; List of prim-procs (used to create the initial environment)
+  '(+ - * / quotient add1 sub1 zero? not = > >= < <= car cdr list null? assq
+    eq? equal? eqv? atom? cons length list->vector list? pair? procedure?
+    vector->list vector make-vector vector-ref vector? number? symbol? set-car!
+    set-cdr! vector-set! display newline caar cadr cdar cddr caaar caadr cadar
+    caddr cdaar cdadr cddar cdddr apply map append list-tail))
 
-(define apply-proc
-  (lambda (proc-value args env2)
-    (cases proc-val proc-value
-      [prim-proc (op) (apply-prim-proc op args env2)]
-      [clos-proc (vars body env) (if (ormap list? vars)
-                                  (eval-bodies
-                                    (cadr (replace-refs vars body args))
-                                    (extend-env
-                                      (car (replace-refs vars body args))
-                                      (eval-rands-ref vars (if ((list-of expression?) args) (eval-rands args env2) args))
-                                      (if (equal? (cadr (replace-refs vars body args)) body) env env2)))
-                                  (eval-bodies body (extend-env vars (if ((list-of expression?) args) (eval-rands args env2) args) env)))]
-      [case-clos-proc (idss lens bodies env) (let ((pos (list-find-position (length args) lens)))
-                                                (eval-bodies (list-ref bodies pos) (extend-env (list-ref idss pos) args env)))]
-      [clos-improc (vars body env) (eval-bodies body (extend-improper-env vars args env))]
-      [else (error 'apply-proc
-                   "Attempt to apply bad procedure: ~s"
-                    proc-value)])))
-
-(define *prim-proc-names* '(+ - * / quotient add1 sub1 zero? not = > >= < <= car cdr list null? assq eq? equal? eqv? atom? cons length list->vector list? pair? procedure? vector->list vector make-vector vector-ref vector? number? symbol? set-car! set-cdr!
-	vector-set! display newline caar cadr cdar cddr caaar caadr cadar caddr cdaar cdadr cddar cdddr apply map append list-tail))
-
-(define init-env
-  (lambda ()              ; for now, our initial global environment only contains
-  (extend-env            ; procedure names.  Recall that an environment associates
-     *prim-proc-names*   ;  a value (not an expression) with an identifier.
+(define init-env                                                                    ; Creates the initial environment by adding prim-procs to an empty env
+  (lambda ()             
+  (extend-env            
+     *prim-proc-names*   
      (map prim-proc
           *prim-proc-names*)
      (empty-env))))
 
-; Usually an interpreter must define each
-; built-in procedure individually.  We are "cheating" a little bit.
-
-(define apply-prim-proc
+(define apply-prim-proc                                                             ; Definitions for each of the previously named prim-procs
   (lambda (prim-proc args env2)
     (case prim-proc
       [(+) (apply + args)]
@@ -278,6 +293,9 @@
             prim-op)])))
 
 
+; The following seven procedures are used in syntax-expanding class-exp
+; The first five are nearly identical and are simply filter procs
+
 (define filter-static-fields
   (lambda (ls)
     (cond
@@ -323,21 +341,23 @@
           [private-var (pred name val) (cons (car ls) (filter-public-fields (cdr ls)))]
           [else (filter-public-fields (cdr ls))])])))
 
-(define make-constr
-  (lambda (fields methods)
-    (let ((fields fields) (methods methods))
-      (lambda-exp (list 'args)
-        (list (letrec-exp (cons 'this (map (lambda (x) (caddr x)) fields)) '((msg . args))
-              (cons (make-constr-help fields methods) (map (lambda (x) (parse-exp (cadddr x))) fields))
-              (list (se 
-                (let-exp '(fields) (map parse-exp (map caddr fields))
-                (list (se (parse-exp '(if (not (null? args))
-                      (let loop ((fields fields) (args args))
-                        (if (not (or (null? (car args) (null? args))))
+(define make-constr                                                                 ; makes the default constructor method
+  (lambda (fields methods)                                                          ; at this time, constructors do not accept arguments
+    (let ((fields fields) (methods methods))                                        ; the constructor method actually returns the generated cases for
+      (lambda-exp (list 'args)                                                      ; non-static methods in an environment which contains the fields
+        (list (letrec-exp
+                (cons 'this (map (lambda (x) (caddr x)) fields))
+                '((msg . args))
+                (cons (make-constr-help fields methods) (map (lambda (x) (parse-exp (cadddr x))) fields))
+                  (list (se 
+                    (let-exp '(fields) (map parse-exp (map caddr fields))           ; used to accept arguments; down't work because of environment depth
+                      (list (se (parse-exp '(if (not (null? args))                  ; it may work if refs are used here
+                        (let loop ((fields fields) (args args))
+                          (if (not (or (null? (car args) (null? args))))
                             (set! (car fields) (car args))
                             (loop (cdr fields) (cdr args))))))) (var-exp 'this)))))))))))
 
-(define make-constr-help
+(define make-constr-help                                                            ; helper for make-constr
   (lambda (fields methods)
     (let ((res (filter-public-fields fields)))
       (lambda-exp-improperls (list 'msg) (list 'args)
@@ -346,74 +366,81 @@
           (map (lambda (x) (app-exp (list x))) (append (map quote-exp (map cadr methods)) (map (lambda (x) (quote-exp (caddr x))) res)))
           (append (map cadddr methods) (map (lambda (x) (parse-exp (caddr x))) res)))))))))
 
-(define arg-default       ;;;deprecated
-  (lambda (fields args)
-    (cond
-      [(null? fields) '()]
-      [(null? args) (cons (cadddr (car fields)) (arg-default (cdr fields) (cdr args)))]
-      [else (cons (car args) (arg-default (cdr fields) (cdr args)))])))
 
-;syntax-expand procedure
 
-(define syntax-expand
+(define syntax-expand                                                               ; Expand an expression into an equivalent expression
   (lambda (exp)
     (let exp-recur ((exp exp))
       (cases expression exp
-       [let-exp (vars vals body)
-		(app-exp (append (list (lambda-exp vars (parse-refs (find-ref vars) (map syntax-expand body)))) vals))]
-       [define-exp (var val) (define-exp var (se val))]
+        [let-exp (vars vals body)                                                    ; let->lambda
+		      (app-exp (append (list (lambda-exp vars (parse-refs (find-ref vars) (map syntax-expand body)))) vals))]
 
+        [define-exp (var val) (define-exp var (se val))]                             ; define (expand second arg)
 
-       [class-exp (fields methods)
+        [class-exp (fields methods)                                                  ; class
           (let* ((res (filter-static-fields fields)) (res2 (filter-public-fields res)))
-            (let-exp (append (map caddr res) (list 'make)) (append (if (null? res) '() (map parse-exp (map cadddr res))) (list (make-constr fields methods)));;Even god has no idea what is going on anymore
-              (list (lambda-exp-improperls (list 'msg) (list 'args) ;this might maybe be an app expression
-                (list (se (case-exp
+            (let-exp                                                                 ; let used for static fields
+              (append (map caddr res) (list 'make))
+              (append (if (null? res) '() (map parse-exp (map cadddr res))) (list (make-constr fields methods)))
+              (list (lambda-exp-improperls (list 'msg) (list 'args)                  ; lambda used for static methods
+                (list (se (case-exp                                                  ; generates a case-exp for methods
                       (var-exp 'msg)
                       (map (lambda (x) (app-exp (list (quote-exp x)))) (cons 'make (append (map cadr (filter-static-methods methods)) (map caddr res))))
                       (cons (parse-exp '(make args)) (append (map cadddr (filter-static-methods methods)) (map parse-exp (map caddr res)))))))))))]
 
-       [let*-exp (vars vals body)
-		 (syntax-expand (let-exp (list (car vars)) (list (car vals))
-					 (list (if (not (null? (cddr vals)))
-						   (let*-exp (cdr vars) (cdr vals) body)
-						   (let-exp (cdr vars) (cdr vals) body)))))]
+        [let*-exp (vars vals body)
+		      (syntax-expand (let-exp (list (car vars)) (list (car vals))
+					  (list (if (not (null? (cddr vals)))
+					 	  (let*-exp (cdr vars) (cdr vals) body)
+						  (let-exp (cdr vars) (cdr vals) body)))))]
+
         [named-let (name vars vals body)
           (letrec-exp (cons name vars) (cons vars (find-idss vals '())) (cons (lambda-exp vars body) vals) (list (app-exp (cons (parse-exp name) vals))))]
-       [begin-exp (body)
-		  (app-exp (list (lambda-exp '() (map syntax-expand body))))]
-       [cond-exp (conditions bodies)
-        (cond
-          [(equal? (var-exp 'else) (car conditions)) (syntax-expand (car bodies))]
-          [(null? (cdr conditions)) (if-exp-ne (syntax-expand (car conditions)) (syntax-expand (car bodies)))]
-          [else (if-exp (syntax-expand (car conditions)) (syntax-expand (car bodies)) (syntax-expand (cond-exp (cdr conditions) (cdr bodies))))])]
-       [and-exp (body)
-        (if (null? body) (lit-exp #t)
-          (if-exp (car body) (syntax-expand (and-exp (cdr body))) (car body)))]
-       [or-exp (body)
-       (if (null? body) (lit-exp #f)
-        (if (null? (cdr body))
-          (if-exp (syntax-expand (car body))
-                  (syntax-expand (car body))
-                  (lit-exp '#f))
-          (syntax-expand
-            (let-exp '(car-body) (list (syntax-expand (car body)))
-                                   (list (if-exp '(var-exp car-body)
-                                                 '(var-exp car-body)
-                                                  (syntax-expand (or-exp (cdr body)))))))))]
+
+        [begin-exp (body)
+		      (app-exp (list (lambda-exp '() (map syntax-expand body))))]
+
+        [cond-exp (conditions bodies)
+          (cond
+            [(equal? (var-exp 'else) (car conditions)) (syntax-expand (car bodies))]
+            [(null? (cdr conditions)) (if-exp-ne (syntax-expand (car conditions)) (syntax-expand (car bodies)))]
+            [else (if-exp (syntax-expand (car conditions)) (syntax-expand (car bodies)) (syntax-expand (cond-exp (cdr conditions) (cdr bodies))))])]
+
+        [and-exp (body)
+          (if (null? body) (lit-exp #t)
+            (if-exp (car body) (syntax-expand (and-exp (cdr body))) (car body)))]
+
+        [or-exp (body)
+          (if (null? body) (lit-exp #f)
+          (if (null? (cdr body))
+            (if-exp (syntax-expand (car body))
+                    (syntax-expand (car body))
+                    (lit-exp '#f))
+            (syntax-expand
+              (let-exp '(car-body)
+                        (list (syntax-expand (car body)))
+                        (list (if-exp '(var-exp car-body)
+                                      '(var-exp car-body)
+                                       (syntax-expand (or-exp (cdr body)))))))))]
+
         [if-exp (id true false)
-	         (if-exp (syntax-expand id)
+	        (if-exp (syntax-expand id)
 		        (syntax-expand true)
 		        (syntax-expand false))]
+
         [if-exp-ne (id true)
-	       (if-exp-ne (syntax-expand id)
-		       (syntax-expand true))]
+	        (if-exp-ne (syntax-expand id)
+		        (syntax-expand true))]
+
         [case-exp (id conditions bodies)
 		      (cond
 		        [(null? (cdr conditions)) (se (if-exp-ne (member-exp id (cadar conditions)) (car bodies)))]
 		        [(equal? (var-exp 'else) (cadr conditions)) (se (if-exp (member-exp id (cadar conditions)) (car bodies) (cadr bodies)))]
 		        [else (se (if-exp (member-exp id (cadar conditions)) (car bodies) (case-exp id (cdr conditions) (cdr bodies))))])]
+
         [else exp]))))
+
+
 
 (define se syntax-expand)
 
