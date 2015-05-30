@@ -1,5 +1,5 @@
 ; Procedures used in parsing classes.
-; Created by Lexie Harris, Jason Lane, and Sam Pastoriza from 25 May 2015 to 28 May 2015
+; Created by Lexi Harris, Jason Lane, and Sam Pastoriza from 25 May 2015 to 28 May 2015
 
 (define class-parse 															; Used to define a class as its name and parse its fields. Calls the other procs in this file.
 	(lambda (datum)

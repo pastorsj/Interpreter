@@ -1,6 +1,6 @@
 ; Abstract syntax interpreter
 ; By Jason Lane and Sam Pastoriza
-; Class modifications by Lexie Harris, Jason Lane, and Sam Pastoriza
+; Class modifications by Lexi Harris, Jason Lane, and Sam Pastoriza
 
 (define top-level-eval                                                              ; Evaluates an expression at the top level (i.e., in an empty environment)
   (lambda (form)

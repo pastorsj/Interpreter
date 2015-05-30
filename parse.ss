@@ -1,6 +1,6 @@
 ; Parser for Scheme
 ; Heavily modified by Jason Lane and Sam Pastoriza
-; Class modifications by Lexie Harris, Jason Lane, and Sam Pastoriza
+; Class modifications by Lexi Harris, Jason Lane, and Sam Pastoriza
 
 (define parse-exp                                                                                                 ; Used to parse Scheme syntax into abstract syntax
   (lambda (datum)
