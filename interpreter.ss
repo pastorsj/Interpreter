@@ -90,13 +90,6 @@
                     (lambda ()
 			                (eopl:error 'apply-env "variable ~s is not bound" id)))))])]
 
-			[let-exp (vars vals body) 												; let-exp
-	        	(let ([new-env (extend-env 											; not needed if you're expanding properly
-	        						vars
-					  				(eval-rands vals env)
-					  				env)])
-		        (eval-bodies body new-env))]
-
         [app-exp (rands)                                                            ; app-exp
 	        (let ([proc-value (eval-exp (car rands) env)]                           ; Apply the evaluation of the first argument to the rest
 		        [args (cdr rands)])
@@ -126,13 +119,13 @@
         [case-lambda-exp (idss lens bodies)                                         ; case-lambda-exp
           (case-clos-proc idss lens bodies env)]
 
-	[lambda-exp-improperls (reqs non-req body)                                        ; lambda-exp-improperls
+	[lambda-exp-improperls (reqs non-req body)                                      ; lambda-exp-improperls
 			       (clos-improc (append reqs non-req) body env)]
 
-	[lambda-exp-nolimit (id body)                                                     ; lambda-exp-nolimit
+	[lambda-exp-nolimit (id body)                                                   ; lambda-exp-nolimit
 			    (clos-improc (list id) body env)]
 
-	[while-exp (test body)                                                            ; while-exp
+	[while-exp (test body)                                                          ; while-exp
 		   (if (eval-exp test env)
 		       (eval-exp (app-exp `((lambda-exp ()
 					      ((app-exp ((lambda-exp ()  ,body)))
@@ -386,14 +379,14 @@
 
         [class-exp (fields methods)                                                  ; class
           (let* ((res (filter-static-fields fields)) (res2 (filter-public-fields res)))
-            (let-exp                                                                 ; let used for static fields
+            (se (let-exp                                                                 ; let used for static fields
               (append (map caddr res) (list 'make))
               (append (if (null? res) '() (map parse-exp (map cadddr res))) (list (make-constr fields methods)))
               (list (lambda-exp-improperls (list 'msg) (list 'args)                  ; lambda used for static methods
                 (list (se (case-exp                                                  ; generates a case-exp for methods
                       (var-exp 'msg)
                       (map (lambda (x) (app-exp (list (quote-exp x)))) (cons 'make (append (map cadr (filter-static-methods methods)) (map caddr res))))
-                      (cons (parse-exp '(make args)) (append (map cadddr (filter-static-methods methods)) (map parse-exp (map caddr res)))))))))))]
+                      (cons (parse-exp '(make args)) (append (map cadddr (filter-static-methods methods)) (map parse-exp (map caddr res))))))))))))]
 
         [let*-exp (vars vals body)
 		      (syntax-expand (let-exp (list (car vars)) (list (car vals))
