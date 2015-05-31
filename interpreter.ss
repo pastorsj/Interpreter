@@ -90,14 +90,21 @@
                     (lambda ()
 			                (eopl:error 'apply-env "variable ~s is not bound" id)))))])]
 
+			[let-exp (vars vals body) 												; let-exp
+	        	(let ([new-env (extend-env 											; not needed if you're expanding properly
+	        						vars
+					  				(eval-rands vals env)
+					  				env)])
+		        (eval-bodies body new-env))]
+
         [app-exp (rands)                                                            ; app-exp
-	        (let ([proc-value (eval-exp (car rands) env)]                             ; Apply the evaluation of the first argument to the rest
+	        (let ([proc-value (eval-exp (car rands) env)]                           ; Apply the evaluation of the first argument to the rest
 		        [args (cdr rands)])
             (cases proc-val proc-value
               [clos-proc (vars body env2) (apply-proc proc-value args env)]         ; Clos-proc case (used to handle refs)
               [else (apply-proc proc-value (eval-rands args env) env)]))]           ; Normal case
 
-	      [letrec-exp (procnames idss body letrec-body)                               ; letrec-exp
+	      [letrec-exp (procnames idss body letrec-body)                             ; letrec-exp
 		      (eval-bodies letrec-body
 			      (extend-env-recursively procnames idss body env))]
 
